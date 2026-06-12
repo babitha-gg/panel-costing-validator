@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0a6450">
+<title>EcoSoch — Panel Costing Validator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g:#0a6450;--gl:#e8f5f0;--gd:#064030;
+  --a:#8a5410;--al:#fcf3e0;
+  --r:#9c3a17;--rl:#fbeee7;
+  --b:#1a4d8c;--bl:#eef4fb;
+  --bg:#fafaf7;--w:#fff;--bdr:#e8e5dc;
+  --tx:#1a1916;--t2:#5e5c54;--t3:#a09e96;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx);font-size:15px;line-height:1.5;min-height:100vh;min-height:100dvh}
+.topbar{background:#0f1210;border-bottom:1px solid #1e2420;position:sticky;top:0;z-index:50}
+.tb-inner{max-width:1200px;margin:0 auto;padding:0 16px;height:50px;display:flex;align-items:center;gap:8px}
+.logo-sq{width:28px;height:28px;background:var(--g);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;color:#fff;font-size:14px}
+.logo-name{font-size:14px;font-weight:700;color:#fff}
+.logo-sep{color:#333;margin:0 2px}
+.logo-sub{font-size:12px;color:#666}
+.ver{margin-left:auto;font-size:10px;color:#444;font-family:monospace}
+.tb-home{display:none;align-items:center;gap:6px;background:var(--g);color:#fff;border:none;font-family:inherit;font-size:13px;font-weight:600;padding:7px 14px;border-radius:7px;cursor:pointer;margin-left:auto;-webkit-appearance:none;min-height:36px}
+.tb-home:active,.tb-home:hover{background:var(--gd)}
+body.results-visible .ver{display:none}
+body.results-visible .tb-home{display:inline-flex}
+.up-wrap{min-height:calc(100vh - 50px);min-height:calc(100dvh - 50px);display:flex;align-items:center;justify-content:center;padding:20px}
+.up-card{background:var(--w);border-radius:18px;border:1px solid var(--bdr);padding:32px 22px;text-align:center;max-width:560px;width:100%;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 22px rgba(0,0,0,.04)}
+.up-ring{width:64px;height:64px;border-radius:50%;background:var(--gl);border:2px solid #9ee4ce;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.up-ring svg{width:28px;height:28px;stroke:var(--g);fill:none;stroke-width:1.8}
+.up-card h1{font-size:21px;font-weight:700;margin-bottom:6px;letter-spacing:-.02em}
+.up-card p{color:var(--t2);font-size:13px;line-height:1.65;margin-bottom:18px}
+.scope-chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+.chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;background:var(--gl);color:var(--gd)}
+.dz{border:2px dashed var(--bdr);border-radius:12px;padding:32px 18px;background:var(--bg);transition:.15s;margin-bottom:14px;cursor:pointer;text-align:center;user-select:none;-webkit-user-select:none}
+.dz:hover{border-color:var(--g);background:var(--gl)}
+.dz.over{border-color:var(--g);background:var(--gl);border-style:solid;transform:scale(1.02);box-shadow:0 0 0 4px rgba(10,100,80,.12)}
+.dz-icon{width:32px;height:32px;color:var(--t3);margin:0 auto 10px;display:block;pointer-events:none}
+.dz:hover .dz-icon,.dz.over .dz-icon{color:var(--g)}
+.dz-t{font-size:15px;font-weight:600;color:var(--tx);margin-bottom:4px;pointer-events:none}
+.dz-s{font-size:12px;color:var(--t3);pointer-events:none}
+.fbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--g);color:#fff;font-family:inherit;font-size:15px;font-weight:600;padding:13px 28px;border-radius:10px;border:none;cursor:pointer;min-height:44px;text-decoration:none;-webkit-appearance:none}
+.fbtn:active,.fbtn:hover{background:var(--gd)}
+.fbtn svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2}
+.st{margin-top:12px;font-size:12px;min-height:18px;color:var(--t3)}
+.st.ok{color:var(--g);font-weight:600}
+.st.err{color:var(--r);font-weight:600}
+.res-wrap{display:none;max-width:1200px;margin:0 auto;padding:18px 14px}
+.banner{background:#0f1210;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:700px){.banner{display:flex;align-items:center;gap:0;flex-wrap:wrap}}
+.bn-item{padding:0}
+@media(min-width:700px){.bn-item{padding:0 14px;border-right:1px solid #262626}.bn-item:first-child{padding-left:0}.bn-item:last-child{border-right:none}}
+.bn-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#555;margin-bottom:2px}
+.bn-v{font-size:12px;font-weight:600;color:#fff;line-height:1.3;word-break:break-word}
+.overall{background:var(--w);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.overall h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:10px}
+.overall-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:700px){.overall-grid{grid-template-columns:repeat(4,1fr)}}
+.ovr-card{background:var(--bg);border:1px solid var(--bdr);border-radius:9px;padding:11px 13px}
+.ovr-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:4px}
+.ovr-val{font-size:20px;font-weight:800;color:var(--tx);line-height:1.1;font-family:monospace}
+.ovr-sub{font-size:10px;color:var(--t3);margin-top:3px}
+.ovr-card.ok{background:#dcfff4;border-color:#9ee4ce}.ovr-card.ok .ovr-val{color:var(--gd)}
+.ovr-card.warn{background:#fff7e0;border-color:#fcd34d}.ovr-card.warn .ovr-val{color:var(--a)}
+.ovr-card.err{background:#ffe4e4;border-color:#fca5a5}.ovr-card.err .ovr-val{color:var(--r)}
+.sec{background:var(--w);border:1px solid var(--bdr);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.sec-hd{padding:12px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;background:#faf9f7;gap:8px;flex-wrap:wrap}
+.sec-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:9px;letter-spacing:-.01em;min-width:0;flex:1}
+.sec-ico{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:800;color:#fff;font-size:12px}
+.ic-g{background:var(--g)}.ic-b{background:var(--b)}.ic-a{background:#d97706}.ic-r{background:var(--r)}
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.bOK{background:#dcfff4;color:var(--gd)}.bWarn{background:#fff7e0;color:var(--a)}.bErr{background:#ffe4e4;color:var(--r)}
+.bInfo{background:var(--bl);color:var(--b)}.bGray{background:#f0ede8;color:#666}
+.pinfo{padding:12px 16px;background:#0f1210;color:#fff;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:600px){.pinfo{grid-template-columns:repeat(4,1fr)}}
+.pi-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#666;margin-bottom:2px}
+.pi-val{font-size:13px;font-weight:700;color:#fff}
+.compare{padding:14px 16px;background:#fbfaf6;border-bottom:1px solid var(--bdr)}
+.compare-row{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:700px){.compare-row{grid-template-columns:1fr 1fr 1fr}}
+.cmp{background:var(--w);border:1px solid var(--bdr);border-radius:8px;padding:12px}
+.cmp-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:4px}
+.cmp-val{font-size:19px;font-weight:800;line-height:1.1;font-family:monospace}
+.cmp-src{font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4}
+.cmp.sheet{border-left:3px solid var(--b)}.cmp.sheet .cmp-val{color:var(--b)}
+.cmp.market{border-left:3px solid var(--g)}.cmp.market .cmp-val{color:var(--gd)}
+.cmp.var{border-left:3px solid #ccc}
+.cmp.var.ok{border-left-color:var(--g);background:#f3fbf7}.cmp.var.ok .cmp-val{color:var(--gd)}
+.cmp.var.warn{border-left-color:#d97706;background:#fffbf0}.cmp.var.warn .cmp-val{color:var(--a)}
+.cmp.var.err{border-left-color:var(--r);background:#fdf4f1}.cmp.var.err .cmp-val{color:var(--r)}
+.bomhd{padding:10px 16px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);border-bottom:1px solid var(--bdr)}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px}
+th{text-align:left;padding:9px 14px;background:#faf9f7;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bdr);white-space:nowrap}
+td{padding:9px 14px;border-bottom:1px solid var(--bdr);vertical-align:top}
+tr:last-child td{border-bottom:none}
+.tr-total td{background:var(--gl)!important;font-weight:700;border-top:2px solid var(--g)!important}
+.tr-margin td{background:#fff8e0!important;font-weight:600;font-style:italic;color:var(--a)}
+.tr-cost td{background:#eef4fb!important;font-weight:700}
+.nm{font-weight:600;color:var(--tx)}
+.sp{font-size:11px;color:var(--t3);margin-top:2px}
+.mono{font-family:monospace;font-weight:600}
+.info-box{margin:12px 16px;padding:11px 14px;background:var(--bl);border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:var(--b);line-height:1.5}
+.warn-box{margin:12px 16px;padding:11px 14px;background:var(--al);border:1px solid #fcd34d;border-radius:8px;font-size:12px;color:var(--a);line-height:1.5}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin:14px 0 24px;flex-wrap:wrap}
+.btn{padding:11px 20px;font-size:13px;font-weight:600;border-radius:9px;cursor:pointer;border:1.5px solid var(--bdr);background:var(--w);color:var(--tx);font-family:inherit;min-height:44px;display:inline-flex;align-items:center;gap:7px;-webkit-appearance:none}
+.btn:active{background:var(--bg);transform:scale(.98)}
+.btn-g{background:var(--g);color:#fff;border-color:var(--g)}.btn-g:active{background:var(--gd)}
+@media print{.topbar,.actions,.tb-home{display:none!important}.up-wrap{display:none!important}.res-wrap{display:block!important}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="tb-inner">
+    <div class="logo-sq">E</div>
+    <span class="logo-name">EcoSoch</span><span class="logo-sep">·</span>
+    <span class="logo-sub">Panel Costing Validator</span>
+    <span class="ver">v3.3 · Per-component</span>
+    <button class="tb-home" id="homeBtn">↑ Upload new sheet</button>
+  </div>
+</div>
+<div class="up-wrap" id="uploadWrap">
+  <div class="up-card">
+    <div class="up-ring"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div>
+    <h1>Panel Costing Validator</h1>
+    <p>Upload your EcoSoch costing sheet. The tool reads <strong>per-component sheet costs</strong> from the costing tabs and compares each against <strong>live market BOM prices</strong>.</p>
+    <div class="scope-chips">
+      <div class="chip">ACDB</div>
+      <div class="chip">AC Combiner</div>
+      <div class="chip">Solar LT</div>
+      <div class="chip">Main/HT Meter</div>
+    </div>
+    <input type="file" id="fi" accept=".xlsx,.xls" style="display:none">
+    <div class="dz" id="dz">
+      <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+      <div class="dz-t">Drag &amp; drop your EcoSoch .xlsx here</div>
+      <div class="dz-s">or click anywhere in this area to browse</div>
+    </div>
+    <label for="fi" class="fbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Browse &amp; select Excel file</label>
+    <div class="st" id="st"></div>
+  </div>
+</div>
+<div class="res-wrap" id="resultsWrap">
+  <div class="banner" id="banner"></div>
+  <div class="overall" id="overall"></div>
+  <div id="main"></div>
+  <div class="actions">
+    <button class="btn" id="resetBtn">↑ Upload another sheet</button>
+    <button class="btn btn-g" onclick="window.print()">Export PDF</button>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ═══ EcoSoch Panel Costing Validator v3.3 — Per-Component ═══════════
+// Sheet Cost (from costing-reference tabs) vs Market BOM (live prices)
+// ═══════════════════════════════════════════════════════════════════
+
+// ACDB Costing table — mirrors the sheet's "ACDB Costing" tab exactly.
+// Columns: [Min kW, Max kW, Ins, Box (H×W×D mm), ACDB Cost from vendor, Amps]
+// The vendor cost is the single authoritative sheet price (the green column).
+const ACDB_TABLE = [
+  [1,    10.99,  1,  '700×400×300',    6500,   18],
+  [11,   12.99,  1,  '700×400×300',    10000,  22],
+  [13,   15.99,  1,  '700×400×300',    10000,  28],
+  [16,   18.99,  1,  '700×400×300',    10000,  33],
+  [19,   20.99,  1,  '700×400×300',    15000,  37],
+  [21,   25.99,  1,  '700×400×300',    15000,  46],
+  [26,   33.99,  1,  '700×400×300',    15000,  60],
+  [34,   40.99,  1,  '700×400×300',    25000,  73],
+  [41,   50.99,  1,  '700×400×300',    25000,  91],
+  [51,   60.99,  1,  '700×400×300',    25000,  98],
+  [61,   80.99,  1,  '700×400×300',    28000,  109],
+  [81,   90.99,  1,  '700×400×300',    28000,  145],
+  [91,   100.99, 1,  '700×400×300',    28000,  163],
+  [101,  110.99, 1,  '800×400×300',    30000,  181],
+  [111,  125.99, 1,  '800×400×300',    30000,  225],
+  [126,  136.99, 1,  '800×400×300',    30000,  246],
+  [137,  200.99, 2,  '1000×1400×400',  30000,  361],
+  [201,  300.99, 3,  '1300×1450×400',  30000,  542],
+  [301,  400.99, 4,  '1200×1500×400',  45000,  722],
+  [401,  500.99, 5,  '1500×1500×500',  55000,  902],
+  [501,  600.99, 6,  '1800×1800×1000', 65000,  1083],
+  [601,  700.99, 7,  '2100×1800×1000', 75000,  1263],
+  [701,  800.99, 8,  '2100×2000×1000', 85000,  1444],
+  [801,  900.99, 9,  '2400×2000×1000', 95000,  1624],
+  [901,  1000.99,10, '2400×2200×1000', 100000, 1804]
+];
+const SOLAR_LT_TABLE = [
+  [5.001,35,2600,5600,13895,16895,18195,21195],
+  [35.001,50,36000,39000,50285,53285,70785,73785],
+  [50.001,120,50000,60000,64285,74285,84785,94785],
+  [120.001,200,70000,80000,84285,94285,104785,114785],
+  [200.001,300,85000,95000,99285,109285,119785,129785],
+  [300.001,400,110000,120000,124285,134285,144785,154785],
+  [400.001,500,130000,140000,144285,154285,164785,174785],
+  [500.001,600,150000,160000,164285,174285,184785,194785],
+  [600.001,700,170000,180000,184285,194285,204785,214785],
+  [700.001,800,190000,200000,204285,214285,224785,234785],
+  [800.001,900,210000,220000,224285,234285,244785,254785],
+  [900.001,1000,230000,240000,244285,254285,264785,274785]
+];
+// ─── Main Meter Cubicle scenarios with per-scenario bottom-up BOMs ─────
+// Each scenario has its own component-level BOM reflecting what that scope actually needs:
+// - "Full replacement no civil" = full new HT cubicle with bushings, CTs, PTs, busbar, term kit
+// - "3CT3PT modification" = just TTB + welding + meter prep + DISCOM-spec sealing
+// - "Solar Ready" = pre-existing solar provision, just connect meters
+// Market Fair = Σ(component costs) × 1.20 (20% vendor margin)
+const MAIN_METER_SCENARIOS={
+  HT:{label:'HT (11/33 kV)',scenarios:[
+    {id:1,sheet:280000,name:'HT cubicle full replacement (2CT2PT — no civil work)',dim:'1800×1800×800 mm · new HT cubicle',bom:[
+      {comp:'HT MS metal box (3mm CRCA, heavy gauge)',total:65000},
+      {comp:'HT 11/33 kV bushings × 3',total:24000},
+      {comp:'HT CTs Cl 0.5/0.5S × 5 (oil-cooled)',total:32500},
+      {comp:'HT PTs 11kV/110V × 3 (resin cast)',total:54000},
+      {comp:'HT Al busbar 60×10 mm · 4 bars × 2m',total:18000},
+      {comp:'HT cable termination kit (Raychem/3M)',total:18000},
+      {comp:'Glands, lugs, terminals (HT-grade)',total:8000},
+      {comp:'Labour (HT-licensed) 32hr @ ₹900/hr',total:28800}]},
+    {id:2,sheet:350000,name:'HT cubicle full replacement (2CT2PT — civil work needed)',dim:'1800×1800×800 mm + civil work',bom:[
+      {comp:'HT MS metal box (3mm CRCA, heavy gauge)',total:65000},
+      {comp:'HT 11/33 kV bushings × 3',total:24000},
+      {comp:'HT CTs Cl 0.5/0.5S × 5',total:32500},
+      {comp:'HT PTs × 3',total:54000},
+      {comp:'HT busbar 60×10 mm · 4 bars × 2m',total:18000},
+      {comp:'HT cable termination kit',total:18000},
+      {comp:'Glands, lugs, terminals (HT-grade)',total:8000},
+      {comp:'Labour (HT) 32hr @ ₹900/hr',total:28800},
+      {comp:'Civil work — foundation, trenching, cable laying',total:55000}]},
+    {id:3,sheet:65000,name:'3CT3PT cubicle with space for 2 meters, no TTB',dim:'existing cubicle + TTB add',bom:[
+      {comp:'TTB (Test Terminal Block) — HT-grade',total:12000},
+      {comp:'HT cable interface kit',total:8000},
+      {comp:'Meter mounting plate + brackets',total:5000},
+      {comp:'CT secondary wiring (HT-grade)',total:6000},
+      {comp:'Sealing kits + tamper-proof seals',total:5000},
+      {comp:'Glands, lugs, ferrules',total:4000},
+      {comp:'Labour (HT-licensed) 14hr @ ₹900/hr',total:12600}]},
+    {id:4,sheet:90000,name:'3CT3PT cubicle — no space, modification needed',dim:'modify existing HT cubicle',bom:[
+      {comp:'TTB (Test Terminal Block) — HT-grade',total:12000},
+      {comp:'HT cable interface kit',total:8000},
+      {comp:'Cubicle modification (welding, drilling, paint)',total:18000},
+      {comp:'Meter mounting plate + brackets',total:5000},
+      {comp:'CT secondary wiring (HT-grade)',total:6000},
+      {comp:'Sealing kits + tamper-proof seals',total:5000},
+      {comp:'Glands, lugs, ferrules',total:4000},
+      {comp:'Labour (HT) 22hr @ ₹900/hr',total:19800}]},
+    {id:5,sheet:57000,name:'Solar Ready HT meter cubicle',dim:'pre-existing solar provision',bom:[
+      {comp:'TTB (HT-grade)',total:10000},
+      {comp:'Meter mounting + wiring',total:6000},
+      {comp:'CT secondary wiring (HT-grade)',total:5000},
+      {comp:'Sealing kits + tamper seals',total:4000},
+      {comp:'Lugs, ferrules, glands',total:3000},
+      {comp:'Labour (HT) 14hr @ ₹900/hr',total:12600},
+      {comp:'Commissioning + DISCOM testing',total:5000}]},
+  ]},
+  LT3CT:{label:'LT 3CT3PT (50-150 kW)',scenarios:[
+    {id:1,sheet:150000,name:'New LT 50-150 kW meter cubicle (CT type)',dim:'1200×1500×600 mm · new cubicle',bom:[
+      {comp:'LT MS metal box (2mm CRCA, DISCOM-spec)',total:30000},
+      {comp:'Al busbar 50×10 mm · 4 bars × 1.2m (200-300A)',total:10000},
+      {comp:'LT CTs 200/5A Cl 0.5/0.5S × 4 (DISCOM-spec)',total:20000},
+      {comp:'Bushings + cable termination',total:10000},
+      {comp:'Meter mounting + 2 BDM provision + cable trays',total:8000},
+      {comp:'Glands, lugs, terminals (DISCOM-spec)',total:6000},
+      {comp:'Sealing kits + tamper-proof seals',total:5000},
+      {comp:'Labour 24hr @ ₹500/hr',total:12000}]},
+    {id:2,sheet:65000,name:'3CT3PT cubicle with space, no TTB',dim:'existing cubicle + TTB add',bom:[
+      {comp:'TTB (Test Terminal Block) DISCOM-grade',total:8000},
+      {comp:'Cubicle modification (drilling, panel beating)',total:8000},
+      {comp:'Meter mounting plate (DISCOM-spec)',total:5000},
+      {comp:'CT secondary wiring (sealed)',total:5000},
+      {comp:'Sealing kits + tamper-proof seals',total:6000},
+      {comp:'Glands, lugs, ferrules',total:4000},
+      {comp:'Labour 18hr @ ₹500/hr',total:9000},
+      {comp:'Commissioning + DISCOM coordination',total:3000}]},
+    {id:3,sheet:90000,name:'3CT3PT cubicle — modification needed',dim:'major modification',bom:[
+      {comp:'TTB (Test Terminal Block) DISCOM-grade',total:8000},
+      {comp:'Cubicle major modification (welding, painting, partition)',total:22000},
+      {comp:'Meter mounting plate + 2 BDM provision',total:6000},
+      {comp:'CT secondary wiring (sealed)',total:5000},
+      {comp:'Sealing kits + tamper-proof seals',total:6000},
+      {comp:'Glands, lugs, ferrules',total:4000},
+      {comp:'Labour 28hr @ ₹500/hr',total:14000},
+      {comp:'Commissioning + DISCOM coordination',total:4000}]},
+    {id:4,sheet:57000,name:'Solar Ready LT CT meter cubicle',dim:'pre-existing solar provision',bom:[
+      {comp:'TTB DISCOM-grade',total:7000},
+      {comp:'Meter mounting + wiring',total:5000},
+      {comp:'CT secondary wiring (sealed)',total:5000},
+      {comp:'Sealing kits + tamper-proof seals',total:5000},
+      {comp:'Lugs, ferrules, glands',total:3000},
+      {comp:'Labour 16hr @ ₹500/hr',total:8000},
+      {comp:'Commissioning + DISCOM coordination',total:4000}]},
+  ]},
+  LTCT:{label:'LT with CT (35-50 kW)',scenarios:[
+    {id:1,sheet:67500,name:'New cubicle with 1 BDM + CT chamber (EcoSoch scope)',dim:'800×1000×400 mm · new cubicle',bom:[
+      {comp:'LT MS metal box (2mm CRCA, DISCOM-spec)',total:18000},
+      {comp:'Al busbar 40×6 mm · 4 bars × 1m (80A)',total:5000},
+      {comp:'LT CTs 50/5A or 100/5A × 4 (DISCOM-spec)',total:4000},
+      {comp:'Cable termination + bushings',total:3500},
+      {comp:'Meter mounting + 1 BDM provision',total:4000},
+      {comp:'Sealing kits + tamper-proof seals',total:4000},
+      {comp:'Glands, lugs, terminals',total:3000},
+      {comp:'Labour 14hr @ ₹500/hr',total:7000},
+      {comp:'Commissioning + DISCOM coordination',total:2500}]},
+    {id:2,sheet:28500,name:'Client scope / existing compatible',dim:'existing + minimal meter prep',bom:[
+      {comp:'TTB (LT, small)',total:4500},
+      {comp:'Meter wiring + cable routing',total:3500},
+      {comp:'CT secondary wiring (if existing)',total:3000},
+      {comp:'Sealing kits + tamper seals',total:3000},
+      {comp:'Lugs, ferrules, glands',total:2500},
+      {comp:'Labour 10hr @ ₹500/hr',total:5000},
+      {comp:'Commissioning',total:2000}]},
+  ]},
+  LTNOCT:{label:'LT without CT (5-35 kW)',scenarios:[
+    {id:1,sheet:11600,name:'New cubicle with 1 BDM (EcoSoch scope, 5-35 kW)',dim:'600×800×300 mm · new cubicle',bom:[
+      {comp:'LT MS metal box (1.6mm CRCA, DISCOM-spec)',total:3000},
+      {comp:'Al busbar 25×5 mm · 4 bars × 0.8m (35A)',total:1500},
+      {comp:'Cable termination + bushings',total:1200},
+      {comp:'Meter mounting plate (DISCOM-spec)',total:1000},
+      {comp:'Sealing kits + tamper-proof seals',total:800},
+      {comp:'Glands, lugs, terminals',total:600},
+      {comp:'Labour 4hr @ ₹500/hr',total:2000}]},
+    {id:2,sheet:9000,name:'Client scope / existing compatible',dim:'existing + minimal meter prep',bom:[
+      {comp:'Meter wiring + cable routing',total:2000},
+      {comp:'Sealing kits + tamper seals',total:1500},
+      {comp:'Lugs, ferrules, glands',total:1200},
+      {comp:'Labour 6hr @ ₹500/hr',total:3000},
+      {comp:'Commissioning',total:800}]},
+  ]},
+};
+// Determine which category applies based on sanctioned load (or kVA as proxy)
+function applicableCategory(SLor_kva){
+  if(SLor_kva>150)return'HT';
+  if(SLor_kva>50)return'LT3CT';
+  if(SLor_kva>35)return'LTCT';
+  return'LTNOCT';
+}
+// Compute market fair price for a scenario (BOM + 20% margin)
+function scenarioMarket(scen){
+  const cost=scen.bom.reduce((s,l)=>s+l.total,0);
+  const margin=Math.round(cost*0.20);
+  return{cost,margin,fair:cost+margin};
+}
+
+function pfFor(s){return s==='HT'?0.9:0.85}
+function determineSupply(SL){return(SL&&SL>150)?'HT':'LT'}
+function acCurrent(kw,s){return(kw*1000)/(1.732*400*pfFor(s))}  // 230/400V IEC standard
+function nextStd(a){const std=[16,20,25,32,40,50,63,80,100,125,160,200,250,400,630,800,1000,1250,1600,2000];const t=a*1.25;return std.find(x=>x>=t)||std[std.length-1]}
+
+// ═══════════════════════════════════════════════════════════════
+// MARKET PRICING — verified against Indian e-commerce sites (Q1-Q2 2026)
+// All prices are AVERAGES from cross-referenced searches:
+//   • CRCA sheet metal: ₹52/kg average (Tata nexarc ₹42-54, OfBusiness ₹55-62 for IS 2062)
+//   • Aluminium busbar: ₹260/kg (Hindalco IndiaMART listing + LME-linked rate)
+//   • ABB SH204M MCB: ₹890-1000 range (IndiaMART Pigeon Agency, Flipkart, Eleczo)
+//   • L&T DU100H 100A 4P MCCB: ₹5,750-7,110 (Farhath Electricals, LK Smartshop, Eleczo)
+//   • Citel SPDs: DS440-320 ₹1,795, DS440-280 ₹3,600, DS44-280/G ₹6,000 (IndiaMART)
+//   • CTs 100/5A Cl 0.5 ring type: ₹180-350 (IndiaMART multiple suppliers)
+// Last verified: end of Q1 2026 — sources cited in BOM source column.
+// ═══════════════════════════════════════════════════════════════
+//
+//  GOOGLE SHEET LIVE PRICES
+//  The tool reads component prices from your published Google Sheet on each run.
+//  Any component it can match in the sheet uses YOUR price; anything not found
+//  falls back to the built-in default below, so the tool always works.
+//
+//  ONE-TIME SETUP:
+//   1. Open your sheet → File → Share → Publish to web → pick the tab → CSV → Publish.
+//   2. Copy the URL it gives you (it looks like
+//      https://docs.google.com/spreadsheets/d/e/2PACX-..../pub?output=csv ).
+//   3. Paste it between the quotes on the SHEET_CSV_URL line below.
+//   (The /edit link will NOT work — it must be the Publish-to-web CSV link.)
+//
+//  This reads THREE tabs of your Component & Material Costs sheet:
+//   • Table              (gid 0)         → key/value prices incl. steelPerKg
+//   • MS Metal Sheet      (gid 818196891) → weekly IndiaMART steel scrape (avg used if Table empty)
+//   • MCB, MCCB, ACB, VCB (gid 752404217) → structured breaker prices by family + amps
+//
+const SHEET_ID = "1XUjmioGSn5a-xaJ2fWZVX-Px7F9YRURQAEPLzn3k4ks";
+const csvUrl = gid => "https://docs.google.com/spreadsheets/d/"+SHEET_ID+"/gviz/tq?tqx=out:csv&gid="+gid;
+const SHEET_CSV_URL = csvUrl(0);              // primary key/value tab
+const SHEET_GID_STEEL = 818196891;            // MS metal sheet scrape
+const SHEET_GID_BREAKERS = 752404217;         // MCB/MCCB/ACB/VCB
+
+let SHEET = { rows: [], loaded: false, error: null, fetchedAt: null, breakers: null, steelScrape: null };
+
+// Minimal CSV parser (handles quoted fields with commas).
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}
+      else cur+=c;
+    }else{
+      if(c==='"')q=true;
+      else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(c==='\r'){}
+      else cur+=c;
+    }
+  }
+  if(cur.length||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+
+async function fetchCSV(gid){
+  const r=await fetch(csvUrl(gid),{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status+' (sheet not public? set Share → Anyone with link → Viewer)');
+  const txt=await r.text();
+  // If Google returned an HTML login/permission page instead of CSV, detect it.
+  if(/^\s*<(!doctype|html)/i.test(txt)||/Google Sheets|Sign in|accounts\.google/i.test(txt.slice(0,400))){
+    throw new Error('got Google login/permission page, not data — sheet is not publicly readable');
+  }
+  return parseCSV(txt).filter(row=>row.some(c=>String(c).trim()!==''));
+}
+
+// Parse the structured breaker tab into {MCB:[{amps,cost,item}], MCCB:[...], ACB:[...]}.
+// Columns: Section | Family | Amps | Poles | Item | Latest Cost (INR) | Source | ...
+// We keep 4-pole rows (panels are 3-phase) and sanity-check the cost.
+function parseBreakers(grid){
+  const out={MCB:[],MCCB:[],ACB:[],VCB:[]};
+  for(const row of grid){
+    const fam=String(row[1]||'').trim().toUpperCase();
+    if(!out[fam])continue;
+    const amps=parseFloat(row[2]);
+    const poles=parseFloat(row[3]);
+    const item=String(row[4]||'').trim();
+    const cost=parseFloat(String(row[5]||'').replace(/[^0-9.]/g,''));
+    if(isNaN(amps)||isNaN(cost)||cost<=0)continue;
+    // panels use 4-pole; ACB/VCB accept any pole count
+    if(fam==='MCB'||fam==='MCCB'){ if(poles && poles!==4) continue; }
+    out[fam].push({amps,cost,item,src:String(row[6]||'').trim()});
+  }
+  for(const k in out)out[k].sort((a,b)=>a.amps-b.amps);
+  return out;
+}
+
+// Look up a breaker by family + required amps. Picks the smallest rated breaker
+// whose amps >= required. Sanity-checks the price (skips absurd scrapes where a
+// higher-rated breaker is cheaper than a lower one).
+function breakerFromSheet(family,reqAmps){
+  if(!SHEET.breakers||!SHEET.breakers[family]||!SHEET.breakers[family].length)return null;
+  const list=SHEET.breakers[family];
+  // candidates rated >= required amps
+  let cands=list.filter(b=>b.amps>=reqAmps);
+  if(!cands.length)cands=[list[list.length-1]];
+  // monotonic sanity: a breaker's cost should be >= the largest cost of any smaller-rated one
+  // (skip obviously-broken scrapes like 400A cheaper than 100A)
+  const pick=cands[0];
+  const maxBelow=Math.max(0,...list.filter(b=>b.amps<pick.amps).map(b=>b.cost));
+  if(pick.cost<maxBelow*0.6){
+    // price looks wrong (too low vs smaller breakers) — try next candidate that passes
+    const good=cands.find(b=>b.cost>=maxBelow*0.6);
+    if(good)return good;
+    return null; // none sane → caller falls back
+  }
+  return pick;
+}
+
+async function loadSheet(){
+  if(!SHEET_ID){SHEET={rows:[],loaded:false,error:'no sheet id',fetchedAt:null};return;}
+  try{
+    // --- Primary key/value tab (Table) ---
+    const grid=await fetchCSV(0);
+    if(grid.length<2)throw new Error('Table tab looks empty');
+    const header=grid[0].map(h=>String(h).trim().toLowerCase());
+    let priceCol=header.findIndex(h=>/cost|price|rate|inr|amount|value|₹/.test(h));
+    let nameCol=header.findIndex(h=>/item|component|name|description|material|particular|key/.test(h));
+    if(nameCol<0)nameCol=0;
+    if(priceCol<0){
+      let best=-1,bestCount=-1;
+      for(let c=0;c<header.length;c++){if(c===nameCol)continue;let n=0;for(let r2=1;r2<grid.length;r2++){const v=parseFloat(String(grid[r2][c]).replace(/[^0-9.]/g,''));if(!isNaN(v)&&v>0)n++;}if(n>bestCount){bestCount=n;best=c;}}
+      priceCol=best>=0?best:1;
+    }
+    const rows=[];
+    for(let i=1;i<grid.length;i++){
+      const name=String(grid[i][nameCol]||'').trim();
+      const price=parseFloat(String(grid[i][priceCol]||'').replace(/[^0-9.]/g,''));
+      if(name&&!isNaN(price)&&price>0)rows.push({name,nameLow:name.toLowerCase(),price});
+    }
+    SHEET={rows,loaded:true,error:null,fetchedAt:Date.now(),nameHeader:grid[0][nameCol],priceHeader:grid[0][priceCol],breakers:null,steelScrape:null};
+
+    // --- Breaker tab (best-effort; don't fail the whole load if it errors) ---
+    try{const bgrid=await fetchCSV(SHEET_GID_BREAKERS);SHEET.breakers=parseBreakers(bgrid);}catch(e){SHEET.breakers=null;SHEET.breakerErr=e.message;}
+
+    // --- Steel scrape tab → average, used only if Table has no steel ---
+    try{
+      const sgrid=await fetchCSV(SHEET_GID_STEEL);
+      const hdr=sgrid[0].map(h=>String(h).trim().toLowerCase());
+      const pc=hdr.findIndex(h=>/price|rs\/kg|rate/.test(h));
+      if(pc>=0){
+        const vals=[];for(let i=1;i<sgrid.length;i++){const v=parseFloat(String(sgrid[i][pc]||'').replace(/[^0-9.]/g,''));if(!isNaN(v)&&v>0&&v<300)vals.push(v);}
+        if(vals.length){vals.sort((a,b)=>a-b);SHEET.steelScrape=Math.round(vals[Math.floor(vals.length/2)]);} // median
+      }
+    }catch(e){SHEET.steelScrape=null;}
+  }catch(e){
+    SHEET={rows:[],loaded:false,error:e.message,fetchedAt:null,breakers:null};
+  }
+}
+
+// Look up a price from the Table tab by keyword.
+function sheetPrice(keywords){
+  if(!SHEET.loaded||!SHEET.rows.length)return null;
+  for(const kw of keywords){
+    const words=Array.isArray(kw)?kw.map(w=>w.toLowerCase()):[String(kw).toLowerCase()];
+    const hit=SHEET.rows.find(r=>words.every(w=>r.nameLow.includes(w)));
+    if(hit)return{price:hit.price,name:hit.name};
+  }
+  return null;
+}
+
+// Resolve the steel ₹/kg the BOM will use, with a clear source caption.
+// Order: Table tab steelPerKg → MS-scrape median → ₹52 reference.
+function resolveSteel(){
+  const sp=sheetPrice([['steelperkg'],['steel','kg'],['ms','sheet','kg'],['crca','kg']]);
+  if(sp)return{rate:sp.price,src:'Project base · Google Sheet (steel ₹'+sp.price+'/kg)'};
+  if(SHEET.steelScrape)return{rate:SHEET.steelScrape,src:'IndiaMART scrape · Google Sheet (steel ₹'+SHEET.steelScrape+'/kg)'};
+  return{rate:52,src:'IndiaMART reference (steel ₹52/kg)'};
+}
+
+function msBoxCost(box){
+  const p=String(box).split(/[×x ]+/).filter(Boolean);
+  const h=parseFloat(p[0])||700,w=parseFloat(p[1])||400,d=parseFloat(p[2])||300;
+  const surf=2*(h*w+h*d+w*d)/1e6;  // m²
+  const kg=surf*(surf>4?15.7:12.56);  // 2mm vs 1.6mm CRCA
+  const st=resolveSteel();
+  const matR=st.rate;
+  return{box,kg,surf,material:Math.round(kg*matR),fab:Math.round(kg*100),pc:Math.round(surf*350),total:Math.round(kg*matR+kg*100+surf*350),src:st.src+' + fab + powder coat'};
+}
+function busbarCost(amps,len){
+  len=len||1000;
+  const da=amps*1.25;
+  const sz=[{n:'25×5',a:160,cs:125},{n:'25×6',a:190,cs:150},{n:'30×5',a:210,cs:150},{n:'40×5',a:280,cs:200},{n:'40×6',a:330,cs:240},{n:'40×10',a:475,cs:400},{n:'50×10',a:590,cs:500},{n:'60×10',a:700,cs:600},{n:'80×10',a:920,cs:800},{n:'100×10',a:1140,cs:1000},{n:'100×12',a:1380,cs:1200},{n:'120×12',a:1650,cs:1440},{n:'150×12',a:2050,cs:1800}];
+  const s=sz.find(x=>x.a>=da)||sz[sz.length-1];
+  const kg=s.cs*len*2.7/1e6*4;  // density 2.7 g/cm³, ×4 bars (R/Y/B/N)
+  const sp=sheetPrice([['aluminium','busbar'],['aluminum','busbar'],['busbarperkg'],['busbar','kg'],['aluminium','kg']]);
+  const rate=sp?sp.price:260;
+  const srcB=sp?'Project base (aluminium ₹'+sp.price+'/kg)':'Hindalco · IndiaMART (aluminium ₹260/kg)';
+  return{size:s.n,kg,total:Math.round(kg*rate),src:srcB};
+}
+function breakerCost(amps){
+  const std=nextStd(amps);
+  const reqA=Math.ceil(amps);  // actual current; let the sheet's own ratings pick the next size
+  if(std<100){
+    // MCB — from the breaker tab (4-pole), else IndiaMART reference
+    const sp=breakerFromSheet('MCB',reqA);
+    const p={16:550,20:600,25:700,32:900,40:1200,50:1400,63:1600,80:2200};
+    if(sp)return{type:'MCB 4P',size:sp.amps+'A',brand:sp.item,src:'Project base',cost:sp.cost};
+    return{type:'MCB 4P 10kA',size:std+'A',brand:'ABB SH204M / Chint NXB-63',src:'Eleczo · IndiaMART · Flipkart',cost:(p[std]||1600)};
+  }
+  // For ≥800A use ACB; otherwise MCCB
+  if(std>=800){
+    const sp=breakerFromSheet('ACB',reqA);
+    if(sp)return{type:'ACB 4P',size:sp.amps+'A',brand:sp.item,src:'Project base',cost:sp.cost};
+  }
+  const sp=breakerFromSheet('MCCB',reqA);
+  const p={100:6400,125:7800,160:11000,200:14000,250:16500,400:23000,630:36000,800:50000,1000:65000,1250:88000,1600:128000,2000:158000};
+  if(sp)return{type:'MCCB 4P',size:sp.amps+'A',brand:sp.item,src:'Project base',cost:sp.cost};
+  return{type:'MCCB 4P 25-30kA',size:std+'A',brand:'L&T DU100H / Schneider EZC',src:'Eleczo · IndiaMART · LK Smartshop',cost:(p[std]||16500)};
+}
+function spdCost(a){
+  // Try the sheet first (AC 3-phase SPD), else fall back to tiered defaults.
+  const sp=sheetPrice([['spd','ds440'],['ac','spd','3'],['spd','3-ph'],['spd','3ph'],['ac','spd'],['spd']]);
+  if(sp)return{model:sp.name,src:'Project base',cost:sp.price};
+  if(a<=100)return{model:'Citel DS440-320 (3P+N, 20kA)',src:'IndiaMART · Citel India',cost:1800};
+  if(a<=250)return{model:'Citel DS440-280 (3P+N, 40kA)',src:'IndiaMART · Citel India',cost:3600};
+  if(a<=630)return{model:'Citel DS44-280/G (3P+N, 40kA, pluggable)',src:'IndiaMART · Citel India',cost:6000};
+  return{model:'Citel DS150-460 (3P+N, 100kA)',src:'IndiaMART · Citel India',cost:9500};
+}
+function ctCost(a){
+  const sp=sheetPrice([['ct','class'],['current','transformer'],['ct','5a']]);
+  if(sp){const ratio=a<=50?'50/5A':a<=100?'100/5A':a<=200?'200/5A':a<=400?'400/5A':a<=600?'600/5A':a<=1000?'1000/5A':'1500/5A';return{ratio,src:'Project base',cost:sp.price};}
+  if(a<=50)return{ratio:'50/5A',src:'IndiaMART · multiple',cost:250};
+  if(a<=100)return{ratio:'100/5A',src:'IndiaMART · multiple',cost:280};
+  if(a<=200)return{ratio:'200/5A',src:'IndiaMART · multiple',cost:450};
+  if(a<=400)return{ratio:'400/5A',src:'IndiaMART · multiple',cost:700};
+  if(a<=600)return{ratio:'600/5A',src:'IndiaMART · multiple',cost:1100};
+  if(a<=1000)return{ratio:'1000/5A',src:'IndiaMART · Citel India',cost:1800};
+  return{ratio:'1500/5A',src:'IndiaMART · multiple',cost:2800};
+}
+// Helper: glands cost from sheet (any gland line) else default.
+function glandsCost(def){
+  const sp=sheetPrice([['gland','terminal'],['gland','metal'],['gland']]);
+  if(sp)return{cost:sp.price,src:'Project base ('+sp.name+')'};
+  return{cost:def,src:'IndiaMART · local'};
+}
+// Helper: relay / shunt / smart-meter from sheet else default.
+function relayCost(){const sp=sheetPrice([['selec','900vpr'],['voltage','relay'],['protection','relay'],['relay']]);return sp?{cost:sp.price,src:'Project base'}:{cost:1200,src:'IndiaMART · Industrybuying'};}
+function shuntCost(){const sp=sheetPrice([['shunt','trip'],['shunt','release'],['shunt']]);return sp?{cost:sp.price,src:'Project base'}:{cost:950,src:'LK Smartshop · IndiaMART'};}
+
+const inr=n=>(n==null||isNaN(n))?'—':'₹'+Math.round(n).toLocaleString('en-IN');
+const round2=n=>(n==null||isNaN(n))?n:(Math.round(n*100)/100);
+// Strip floating-point noise (99.89999999999999 → 99.9) while keeping real decimals (300.4 → 300.4).
+const cleanNum=n=>{if(n==null||isNaN(n))return n;const r=Math.round(n*1000)/1000;return parseFloat(r.toFixed(3)).toString();};
+const pct=(s,m)=>(s!=null&&m!=null&&m>0)?((s-m)/m*100):null;
+const fp=p=>p==null?'—':(p>=0?'+':'')+p.toFixed(1)+'%';
+const varCls=p=>p==null?'':Math.abs(p)<=15?'ok':Math.abs(p)<=35?'warn':'err';
+const varLbl=p=>p==null?'—':Math.abs(p)<=15?'Fair ✓':p>35?'Overpriced ↑':p<-35?'Severely under ↓':p>0?'Above market ↑':'Below market ↓';
+const mkB=p=>p==null?'<span class="badge bGray">—</span>':Math.abs(p)<=15?'<span class="badge bOK">✓ Fair</span>':p>35?'<span class="badge bErr">↑ Overpriced</span>':p>15?'<span class="badge bWarn">↑ Above market</span>':p<-35?'<span class="badge bErr">↓ Severely under</span>':'<span class="badge bWarn">↓ Below market</span>';
+const sv=v=>String(v==null?'':v).trim();
+const nl=v=>sv(v).toLowerCase().replace(/\s+/g,' ');
+// Normalize ALL sheets so that index 0 always = column A.
+// XLSX.js's sheet_to_json drops leading null columns when !ref starts at B, C, etc.
+// We re-pad the rows with nulls so column letters consistently map to indices.
+function getRows(wb,name){
+  if(!wb.SheetNames.includes(name))return[];
+  const ws=wb.Sheets[name];
+  const ref=ws['!ref']||'A1:A1';
+  // Parse start column letter from !ref (e.g. "B1:X66" -> "B" -> 1)
+  const m=ref.match(/^([A-Z]+)\d+/);
+  let startColIdx=0;
+  if(m){
+    const letters=m[1];
+    for(let i=0;i<letters.length;i++)startColIdx=startColIdx*26+(letters.charCodeAt(i)-64);
+    startColIdx-=1; // 1-indexed letter -> 0-indexed
+  }
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  if(startColIdx===0)return rows;
+  // Pad each row with `startColIdx` nulls at the front so column A is at index 0
+  const pad=new Array(startColIdx).fill(null);
+  return rows.map(r=>r?[...pad,...r]:r);
+}
+
+function detectProj(fname){const f=fname.toLowerCase();if(f.includes('enphase'))return'enphase';if(f.includes('solaredge'))return'solaredge';return'string'}
+
+// Parse an inverter list like "33.3KVA 3PH (2 no.s), 17KVA 3PH (1 no.s)" into
+// consolidated [{model, qty, kva}] entries (summing duplicate models).
+function parseInverterMix(text){
+  if(!text)return[];
+  const parts=String(text).split(/,(?![^()]*\))/);  // split on commas not inside parens
+  const map={};
+  parts.forEach(p=>{
+    p=p.trim();if(!p)return;
+    const qm=p.match(/\(\s*(\d+(?:\.\d+)?)\s*no/i);
+    const qty=qm?parseFloat(qm[1]):1;
+    const model=p.replace(/\(\s*\d+(?:\.\d+)?\s*no\.?s?\s*\)/i,'').trim();
+    const km=model.match(/(\d+(?:\.\d+)?)\s*KVA/i);
+    const kva=km?parseFloat(km[1]):null;
+    if(!model)return;
+    if(map[model]){map[model].qty+=qty;}
+    else{map[model]={model,qty,kva};}
+  });
+  return Object.values(map);
+}
+
+function getInverter(wb,proj){
+  const rows=getRows(wb,'Inverter Selection');
+  // PRIORITY 1: The "Inverters: ..." summary line lists the full inverter mix + total kVA.
+  // This is the most accurate system capacity for multi-inverter (SolarEdge/String) projects.
+  for(const row of rows){
+    if(!row)continue;
+    for(let c=0;c<12;c++){
+      const cell=sv(row[c]);
+      if(cell.toLowerCase().startsWith('inverters:')){
+        // Collect the numeric cells to the right; the larger is total kVA, a smaller integer is strings count.
+        let nums=[];
+        for(let cc=c+1;cc<c+6;cc++){
+          const v=parseFloat(row[cc]);
+          if(!isNaN(v)&&v>0)nums.push(v);
+        }
+        let totalKva=null,strings=null;
+        if(nums.length){
+          totalKva=Math.max(...nums);  // kVA total is the largest number
+          const others=nums.filter(n=>n!==totalKva&&Number.isInteger(n));
+          if(others.length)strings=Math.max(...others);  // strings count
+        }
+        // The full list text after "Inverters:" — keep it complete (no truncation)
+        const fullLabel=cell.replace(/^inverters:\s*/i,'').trim();
+        // Parse individual models: e.g. "33.3KVA 3PH (2 no.s), 17KVA 3PH (1 no.s)"
+        const mix=parseInverterMix(fullLabel);
+        if(totalKva&&totalKva>0){
+          return{id:fullLabel,kva:totalKva,cost:null,fromSummary:true,mix,strings};
+        }
+      }
+    }
+  }
+  // PRIORITY 2: scan ALL model rows and pick the ones actually SELECTED.
+  // The block header row carries a "Yes" flag, but that only means the block is active —
+  // it does NOT identify the chosen model (row 3's "3KVA 1PH" is just the first list entry).
+  // The real selection signal is a non-zero Quantity (col G) or non-zero Cost (col I).
+  // We scan every block (offset 1, 14, 27, ...) and every model row within it.
+  {
+    const selected=[];  // {model, kva, qty, cost}
+    for(const row of rows){
+      if(!row)continue;
+      for(let off=1;off<80;off+=13){
+        const id=sv(row[off+3]);          // E = model ID
+        if(!id||id==='#N/A'||id.length<2)continue;
+        if(/^(id|description|inverter)$/i.test(id))continue;  // skip header cells
+        const kva=parseFloat(row[off+4]);  // F = unit kVA
+        const qty=parseFloat(row[off+5]);  // G = quantity
+        const cost=parseFloat(row[off+7]); // I = cost (selected → non-zero)
+        const isSelected=(!isNaN(qty)&&qty>0)||(!isNaN(cost)&&cost>0);
+        if(isSelected){
+          const q=(!isNaN(qty)&&qty>0)?qty:1;
+          // consolidate duplicates
+          const ex=selected.find(s=>s.model===id);
+          if(ex){ex.qty+=q;ex.cost+=(isNaN(cost)?0:cost);}
+          else selected.push({model:id,kva:isNaN(kva)?null:kva,qty:q,cost:isNaN(cost)?0:cost});
+        }
+      }
+    }
+    if(selected.length){
+      const totalKva=selected.reduce((s,m)=>s+((m.kva||0)*m.qty),0);
+      const totalCost=selected.reduce((s,m)=>s+(m.cost||0),0);
+      const label=selected.map(m=>m.model.trim()+'  ('+m.qty+' no.s)').join(', ');
+      const mix=selected.map(m=>({model:m.model.trim(),qty:m.qty,kva:m.kva}));
+      return{id:label,kva:totalKva>0?totalKva:null,cost:totalCost||null,mix,fromSelection:true};
+    }
+  }
+  // PRIORITY 3 (legacy): first Yes-flagged block row — only as a last resort before Final Worksheet.
+  for(const row of rows){
+    if(!row)continue;
+    for(let off=1;off<80;off+=13){
+      const flag=sv(row[off+1]).toLowerCase();  // C = flag (Yes/No)
+      if(flag==='yes'||flag==='y'){
+        const id=sv(row[off+3]);  // E = inverter ID
+        if(id&&id!=='#N/A'&&id.length>2){
+          const kva=parseFloat(row[off+4])||null;
+          const qty=parseFloat(row[off+5])||1;
+          return{id,kva,cost:parseFloat(row[off+6])||null,mix:[{model:id,qty,kva}],weakDetect:true};  // F = kVA, H = baseCost
+        }
+      }
+    }
+  }
+  // PRIORITY 3: Final Worksheet line item (column F = index 5 after normalization)
+  const fw=getRows(wb,'Final Worksheet');
+  for(let ri=0;ri<Math.min(fw.length,30);ri++){
+    const row=fw[ri];if(!row)continue;
+    const desc=sv(row[5]).toLowerCase();  // F = description
+    const id=sv(row[6]);  // G = ID
+    if((desc.includes('inverter')||desc.includes('micro'))&&id&&id!=='#N/A'&&id.length>4){
+      let kva=null;
+      const m=id.match(/(\d+(?:\.\d+)?)\s*K/i);
+      if(m)kva=parseFloat(m[1]);
+      if(id.toLowerCase().includes('iq')||desc.includes('micro'))kva=0.475;
+      return{id,kva,cost:parseFloat(row[10])||null};  // K = unit price
+    }
+  }
+  if(proj==='enphase')return{id:'IQ8P',kva:0.475,cost:8050};
+  return null;
+}
+
+function getInputs(wb){
+  const out={phase:null,sanctionedLoad:null,smartMeter:null,blocks:1,blockData:[],totalInverters:0,totalCurrent:0,totalACDBCost:null,projectSizeKwp:null};
+  for(const row of getRows(wb,'Final Worksheet')){const lbl=nl(row[1]);if(lbl.includes('phase at premises'))out.phase=sv(row[2]);if(lbl.includes('smart meter'))out.smartMeter=sv(row[2]);if(lbl==='sanctioned load')out.sanctionedLoad=parseFloat(row[2])||parseFloat(row[3])||null;if(lbl.includes('project size'))out.projectSizeKwp=parseFloat(row[2])||parseFloat(row[3])||null;if(lbl.includes('number of blocks')||lbl.includes('total blocks'))out.blocks=parseInt(row[2])||parseInt(row[3])||1}
+  // Also try Cost Summary "Materials & Services for XXX kWp" header
+  if(!out.projectSizeKwp){
+    for(const row of getRows(wb,'Cost Summary')){
+      for(const cell of (row||[])){
+        const m=String(cell||'').match(/for\s+(\d+(?:\.\d+)?)\s*kwp/i);
+        if(m){out.projectSizeKwp=parseFloat(m[1]);break;}
+      }
+      if(out.projectSizeKwp)break;
+    }
+  }
+  // Parse "ACDB for Multiple Blocks" tab — each block has 5 rows: inverter count, capacity, max AC current, inverter cost, ACDB cost
+  // After getRows normalization (index = column position, A=0):
+  //   Block-1 value at column C = index 2 ; Block-3 at G = 6 ; Block-5 at K = 10 ; Block-7 at O = 14
+  //   Block-2 value at column C = index 2 (row 10+) ; Block-4 at G ; Block-6 at K ; Block-8 at O
+  //   Rows: R3-R7 = blocks 1,3,5,7 (row idx 2 in JS) ; R10-R14 = blocks 2,4,6,8 (row idx 9)
+  const mb=getRows(wb,'ACDB for Multiple Blocks');
+  if(mb.length>0){
+    const blockMap=[
+      {name:'Block-1',row:2,col:2},{name:'Block-3',row:2,col:6},{name:'Block-5',row:2,col:10},{name:'Block-7',row:2,col:14},
+      {name:'Block-2',row:9,col:2},{name:'Block-4',row:9,col:6},{name:'Block-6',row:9,col:10},{name:'Block-8',row:9,col:14}
+    ];
+    for(const b of blockMap){
+      if(!mb[b.row])continue;
+      const invCount=parseFloat(mb[b.row][b.col])||0;  // R3/R10 = inverter count
+      const invCap=parseFloat((mb[b.row+1]||[])[b.col])||0;  // R4/R11 = total capacity kVA
+      const maxAC=parseFloat((mb[b.row+2]||[])[b.col])||0;  // R5/R12 = max AC current
+      const invCost=parseFloat((mb[b.row+3]||[])[b.col])||0;  // R6/R13 = inverter cost
+      const acdbCost=parseFloat((mb[b.row+4]||[])[b.col]);  // R7/R14 = ACDB cost (may be 'Invalid Inverter Cost')
+      if(invCount>0||invCap>0){
+        out.blockData.push({name:b.name,invCount,invCap,maxAC,invCost,acdbCost:isNaN(acdbCost)?null:acdbCost});
+      }
+    }
+    // Totals area: R16 onwards
+    for(let ri=15;ri<Math.min(mb.length,22);ri++){
+      const row=mb[ri];if(!row)continue;
+      const lbl=nl(row[1]);
+      if(lbl.includes('total number of inverters'))out.totalInverters=parseFloat(row[2])||0;
+      if(lbl.includes('total current'))out.totalCurrent=parseFloat(row[2])||0;
+      if(lbl.includes('total acdb cost'))out.totalACDBCost=parseFloat(row[2])||null;
+    }
+    if(out.blockData.length>=2)out.blocks=out.blockData.length;
+  }
+  return out;
+}
+
+function scanPanels(wb){
+  const r={acdb:{present:false,sheetCost:null,qty:0,source:''},combiner:{present:false,sheetCost:null,qty:0,source:'',userDesc:''},solarLT:{present:false,sheetCost:null,qty:0,source:'',smartMeter:false},mainMeter:{present:false,sheetCost:null,qty:0,source:''}};
+  // CLASSIFY a description into one of the four panel keys
+  // AC Combiner detection: explicit "combiner" word, or "AJB" (AC Junction Box), or "ACCB", or "AC combiner box"
+  function classify(d){
+    d=nl(d);
+    if(d.startsWith('acdb -')||d.startsWith('acdb-')||d==='acdb')return'acdb';
+    if(d.includes('ac combiner')||d.includes('accb')||(d.includes('combiner')&&!d.includes('dc'))||(d.includes('ajb')&&!d.includes('dc')))return'combiner';
+    if(d.includes('solar lt'))return'solarLT';
+    if(d.includes('main lt meter')||d.includes('main ht meter')||d.includes('main meter cubicle'))return'mainMeter';
+    return null;
+  }
+  function qtyFromDesc(s){const m=String(s||'').match(/-\s*(\d+(?:\.\d+)?)\s*no/i);return m?parseFloat(m[1]):null}
+
+  // ─── Pass 1: Scan ENTIRE Final Worksheet for any row that classifies as a panel
+  // This catches both the standard panel rows (R53-R58) AND any Extras rows (R67-70, R83-86)
+  // where the user has manually typed an AC Combiner / AJB / ACCB description.
+  //
+  // CRITICAL: In EcoSoch sheets, the Final Worksheet layout is NOT a clean qty×unit grid.
+  // Column J (idx 9) and column K (idx 10) often BOTH hold the line TOTAL cost (not qty/unit).
+  // Column O (idx 14) holds the discounted/final total.
+  // Therefore: quantity comes ONLY from the "- N no.s" text in the description.
+  //            sheet cost comes from col O (discounted) → else col K → else col J, taking the
+  //            value that looks like a realistic total (the columns mirror each other).
+  const fw=getRows(wb,'Final Worksheet');
+  for(let ri=0;ri<fw.length;ri++){
+    const row=fw[ri];if(!row)continue;
+    const desc=sv(row[5]);  // column F = description
+    if(!desc)continue;
+    // Skip the placeholder labels — only match if the user has typed real content
+    const dn=nl(desc);
+    if(dn==='extras 1'||dn==='extras 2'||dn==='extras 3'||dn==='extras 4'||dn==='extras - 2'||dn==='extras - 3'||dn==='extras - 4'||dn==='extras - 5')continue;
+    const key=classify(desc);
+    if(!key)continue;
+    // Quantity: ONLY from description text ("ACDB - 10 no.s" → 10). Never from a numeric column.
+    const txtQty=qtyFromDesc(desc);
+    const qty=(txtQty&&txtQty>0)?txtQty:1;
+    // Sheet cost (line total): prefer discounted col O, then col K, then col J — first positive value.
+    const colO=parseFloat(row[14]);  // discounted total
+    const colK=parseFloat(row[10]);  // often holds total
+    const colJ=parseFloat(row[9]);   // often holds total (mirror)
+    let total=null;
+    if(!isNaN(colO)&&colO>0)total=colO;
+    else if(!isNaN(colK)&&colK>0)total=colK;
+    else if(!isNaN(colJ)&&colJ>0)total=colJ;
+    const isExtrasRow=(ri>=66&&ri<=86);  // Rows 67-86 are Extras / Services area
+    if((total!=null&&total>0)||txtQty>0||(isExtrasRow&&total!=null&&total>0)){
+      r[key].present=true;
+      r[key].qty=qty;
+      r[key].sheetCost=total;  // this is the TOTAL for all units (not per-unit)
+      r[key].source='Final Worksheet R'+(ri+1)+(isExtrasRow?' (Extras)':'');
+      if(key==='combiner')r.combiner.userDesc=desc;
+      if(key==='solarLT'&&nl(desc).includes('smart'))r.solarLT.smartMeter=true;
+    }
+  }
+
+  // ─── Pass 2: Scan Cost Summary as fallback
+  const cs=getRows(wb,'Cost Summary');
+  for(let ri=0;ri<cs.length;ri++){
+    const row=cs[ri];if(!row)continue;
+    const desc=sv(row[1]);if(!desc)continue;
+    const dn=nl(desc);
+    if(dn==='extras 1'||dn==='extras 2'||dn==='extras 3'||dn==='extras 4'||dn==='extras - 2'||dn==='extras - 3'||dn==='extras - 4'||dn==='extras - 5')continue;
+    const key=classify(desc);if(!key)continue;
+    const totalCost=parseFloat(row[3]);
+    const txtQty=qtyFromDesc(desc);
+    const hasPrice=!isNaN(totalCost)&&totalCost>0;
+    const hasQty=txtQty&&txtQty>0;
+    if((hasPrice||hasQty)&&!r[key].present){
+      r[key].present=true;
+      r[key].qty=txtQty||r[key].qty||1;
+      r[key].sheetCost=hasPrice?totalCost:null;
+      r[key].source='Cost Summary R'+(ri+1);
+      if(key==='combiner')r.combiner.userDesc=desc;
+      if(key==='solarLT'&&nl(desc).includes('smart'))r.solarLT.smartMeter=true;
+    }else if(r[key].present&&!r[key].sheetCost&&hasPrice){
+      r[key].sheetCost=totalCost;
+    }
+  }
+
+  // ─── Pass 3: AC Combiner auto-trigger — if multi-block project but no Combiner line found,
+  // flag it as "missing from Extras" so the user knows it should have been added manually
+  // (Detection is now in renderCombiner since it needs inputs.blockData)
+
+  return r;
+}
+
+function lookupACDB(kw){return ACDB_TABLE.find(r=>kw>=r[0]&&kw<=r[1])}
+function lookupSolarLT(kw,smart){const r=SOLAR_LT_TABLE.find(x=>kw>=x[0]&&kw<=x[1]);if(!r)return null;return{range:r[0]+' – '+r[1]+' kW',selected:smart?r[6]:r[4]}}
+function lookupMainMeter(SL,supply){
+  const SLval=SL||0;
+  const cat=applicableCategory(SLval);
+  const scenario=MAIN_METER_SCENARIOS[cat].scenarios[0];
+  return{scen:scenario.name,cost:scenario.sheet,category:cat,scenario};
+}
+
+function buildACDB_BOM(kw,supply,I_solar){
+  const ref=lookupACDB(kw);if(!ref)return null;
+  const[,,ins,boxStr,,amps]=ref;
+  const box=msBoxCost(boxStr);
+  const brk=breakerCost(I_solar);
+  const spd=spdCost(I_solar);
+  const bus=busbarCost(I_solar);
+  const labHr=7;
+  const lines=[
+    {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · 1.6-2mm',qty:1,unit:box.total,total:box.total,src:box.src},
+    {comp:'Incomer '+brk.type,spec:brk.size+' · '+brk.brand,qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
+    {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
+    {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · 4 bars × 1m · '+bus.kg.toFixed(2)+' kg',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
+    {comp:'Indicator lamps R/Y/B',spec:'LED 230V',qty:3,unit:85,total:255,src:'IndiaMART · local'},
+    (function(){const g=glandsCost(900);return{comp:'Glands + terminals + ferrules',spec:'1 in / 1 out wiring',qty:1,unit:g.cost,total:g.cost,src:g.src}})(),
+    {comp:'Labour (fab + wiring + test)',spec:labHr+' hr @ ₹500/hr',qty:labHr,unit:500,total:labHr*500,src:'Local fabricator (₹500/hr)'}
+  ];
+  const cost=lines.reduce((s,l)=>s+l.total,0);
+  const margin=Math.round(cost*0.20);
+  return{ref,ins,boxStr,amps,lines,cost,margin,fair:cost+margin};
+}
+
+// Look up the ACDB sizing row by BOTH the number of inputs AND the rated current.
+// A block with N inverters needs an "N in 1 out" ACDB — a bigger enclosure than a
+// single-input box, regardless of the (lower) output current. The vendor table encodes
+// this: rows 137-200kW=2in, 201-300=3in, 301-400=4in, etc. So we must match the Ins
+// column (index 2) >= N first, then ensure the rated amps (index 5) also covers I_acdb.
+function lookupACDB_byInsAndAmps(numInputs,amps){
+  // Candidate rows: those with enough inputs AND enough current headroom.
+  const ok=ACDB_TABLE.filter(r=>r[2]>=numInputs && r[5]>=amps);
+  if(ok.length){
+    // Pick the smallest qualifying row (lowest rated amps among those with enough inputs)
+    return ok.reduce((best,r)=>r[5]<best[5]?r:best,ok[0]);
+  }
+  // Fallback: match on inputs alone (largest current row for that input count)
+  const byIns=ACDB_TABLE.filter(r=>r[2]>=numInputs);
+  if(byIns.length)return byIns.reduce((best,r)=>r[5]<best[5]?r:best,byIns[0]);
+  // Last resort: by amps only
+  return ACDB_TABLE.find(r=>r[5]>=amps)||ACDB_TABLE[ACDB_TABLE.length-1];
+}
+
+// Build an ACDB market BOM sized by the block's input count AND max AC current.
+// numInputs = how many inverters feed this ACDB (e.g. 3 → "3 in 1 out").
+function buildACDB_BOM_byAmps(I_acdb,numInputs){
+  numInputs=Math.max(1,numInputs||1);
+  const ref=lookupACDB_byInsAndAmps(numInputs,I_acdb);
+  const boxStr=ref[3];
+  const ratedAmps=ref[5];
+  const tableIns=ref[2];
+  const box=msBoxCost(boxStr);
+  // Incoming breakers: one per inverter input. Each incomer is sized for the per-input
+  // current (≈ total / numInputs), with an outgoing breaker sized for the combined current.
+  const perInputAmps=I_acdb/numInputs;
+  const inBrk=breakerCost(perInputAmps);
+  const outBrk=breakerCost(I_acdb);
+  const spd=spdCost(I_acdb);
+  const bus=busbarCost(I_acdb);
+  const labHr=numInputs<=1?7:(7+numInputs*2);  // more inputs = more wiring/test time
+  const lines=[
+    {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · '+tableIns+' in 1 out',qty:1,unit:box.total,total:box.total,src:box.src},
+    {comp:'Incomer '+inBrk.type+' (per input)',spec:inBrk.size+' · '+inBrk.brand,qty:numInputs,unit:inBrk.cost,total:inBrk.cost*numInputs,src:inBrk.src}
+  ];
+  if(numInputs>1){
+    lines.push({comp:'Outgoing '+outBrk.type,spec:outBrk.size+' · '+outBrk.brand+' · combined '+Math.round(I_acdb)+'A',qty:1,unit:outBrk.cost,total:outBrk.cost,src:outBrk.src});
+  }
+  lines.push(
+    {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
+    {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · 4 bars × 1m · '+bus.kg.toFixed(2)+' kg',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
+    {comp:'Indicator lamps R/Y/B',spec:'LED 230V',qty:3,unit:85,total:255,src:'IndiaMART · local'},
+    (function(){const base=600+numInputs*300;const g=glandsCost(base);return{comp:'Glands + terminals + ferrules',spec:numInputs+' in / 1 out wiring',qty:1,unit:g.cost,total:g.cost,src:g.src}})(),
+    {comp:'Labour (fab + wiring + test)',spec:labHr+' hr @ ₹500/hr',qty:labHr,unit:500,total:labHr*500,src:'Local fabricator (₹500/hr)'}
+  );
+  const cost=lines.reduce((s,l)=>s+l.total,0);
+  const margin=Math.round(cost*0.20);
+  return{boxStr,ratedAmps,ins:tableIns,numInputs,lines,cost,margin,fair:cost+margin};
+}
+
+// Smart Solar Generation Meter price by system kW (from sheet "Smart - Solar Generation Meter" tab)
+// Tiers: 0-4.999→₹5,000 · 5-34.999→₹9,000 · 35-49.999→₹28,500 · 50-149.999→₹28,500 · 150-1000→₹28,500
+function smartMeterPrice(kw){
+  const sp=sheetPrice([['smart','generation','meter'],['solar','generation','meter'],['generation','meter'],['smart','meter']]);
+  if(sp)return sp.price;
+  if(kw<5)return 5000;
+  if(kw<35)return 9000;
+  return 28500;  // 35 kW and above
+}
+
+function buildSolarLT_BOM(kw,supply,I_solar,smart){
+  let boxStr='600×800×300';
+  if(I_solar>60)boxStr='800×1000×400';if(I_solar>150)boxStr='1000×1200×400';if(I_solar>400)boxStr='1400×1600×600';
+  const box=msBoxCost(boxStr);
+  const brk=breakerCost(I_solar);
+  const spd=spdCost(I_solar);
+  const bus=busbarCost(I_solar,1200);
+  const meterPrice=smartMeterPrice(kw);
+  const labHr=12;
+  // Scope mirrors the sheet's "Smart - Solar generation meter plus Shunt coil + Relay + AC SPD":
+  //   box + 4 busbars + Smart generation meter + Shunt trip coil + Selec relay + AC SPD + outgoing MCCB w/ shunt
+  // NOTE: CTs are NOT a separate line — the smart generation meter is a CT-operated unit that
+  //       includes its own metering CTs, so adding standalone CTs would double-count.
+  const lines=[
+    {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · houses busbars + meter + relay + SPD + MCCB',qty:1,unit:box.total,total:box.total,src:box.src},
+    {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · 4 bars × 1.2m · '+bus.kg.toFixed(2)+' kg',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
+    {comp:'Smart Solar Generation Meter',spec:(smart?'Smart':'Normal')+' net-meter · CT-operated (incl. metering CTs)',qty:1,unit:meterPrice,total:meterPrice,src:'Sheet Smart Generation Meter tab'},
+    (function(){const s=shuntCost();return{comp:'Shunt trip coil (for outgoing MCCB)',spec:'MX shunt release · 230V AC',qty:1,unit:s.cost,total:s.cost,src:s.src}})(),
+    (function(){const r=relayCost();return{comp:'Protection relay',spec:'Selec 900VPR-2-280/520V · 3Ø voltage protection',qty:1,unit:r.cost,total:r.cost,src:r.src}})(),
+    {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
+    {comp:'Outgoing '+brk.type+' (with shunt)',spec:brk.size+' · '+brk.brand+' · shunt-trip equipped',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
+    {comp:'Glands + control wiring',spec:'Meter + relay + shunt control wiring',qty:1,unit:1500,total:1500,src:'IndiaMART · local'},
+    {comp:'Labour (fab + wiring + test)',spec:labHr+' hr @ ₹500/hr',qty:labHr,unit:500,total:labHr*500,src:'Local fabricator (₹500/hr)'}
+  ];
+  const cost=lines.reduce((s,l)=>s+l.total,0);
+  const margin=Math.round(cost*0.20);
+  return{boxStr,meterPrice,lines,cost,margin,fair:cost+margin};
+}
+
+function buildCombiner_BOM(I_comb,ins){
+  const sizes={2:{box:'1000×1400×400',hr:8},3:{box:'1300×1450×400',hr:10},4:{box:'1200×1500×400',hr:11},5:{box:'1500×1500×500',hr:13},6:{box:'1800×1800×1000',hr:18},7:{box:'2100×1800×1000',hr:20},8:{box:'2100×2000×1000',hr:22},9:{box:'2400×2000×1000',hr:24},10:{box:'2400×2200×1000',hr:26}};
+  const sz=sizes[ins]||sizes[10];
+  const box=msBoxCost(sz.box);
+  const brk=breakerCost(I_comb);
+  const bus=busbarCost(I_comb,1200);
+  const lines=[
+    {comp:'MS sheet metal box',spec:sz.box+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · 2mm CRCA · IP54',qty:1,unit:box.total,total:box.total,src:box.src},
+    {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · sized 1.25× '+Math.round(I_comb)+'A',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
+    {comp:'Outgoing '+brk.type,spec:brk.size+' · '+brk.brand+' · for combined '+Math.round(I_comb)+'A',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
+    (function(){const base=ins*400+400;const g=glandsCost(base);return{comp:'Glands + terminals',spec:ins+' incoming + 1 outgoing cable entries',qty:1,unit:g.cost,total:g.cost,src:g.src}})(),
+    {comp:'Labour (fab + wiring + test)',spec:sz.hr+' hr @ ₹500/hr',qty:sz.hr,unit:500,total:sz.hr*500,src:'Local fabricator (₹500/hr)'}
+  ];
+  const cost=lines.reduce((s,l)=>s+l.total,0);
+  const margin=Math.round(cost*0.20);
+  return{box:sz.box,lines,cost,margin,fair:cost+margin};
+}
+
+function buildMainMeter_BOM(SL,supply){
+  const I_load=acCurrent(SL,supply);
+  let boxStr='800×1000×400';
+  if(I_load>200)boxStr='1000×1200×500';if(I_load>400)boxStr='1200×1500×600';if(supply==='HT')boxStr='1500×1800×800';
+  const box=msBoxCost(boxStr);
+  const bus=busbarCost(I_load,1200);
+  const ct=ctCost(I_load);
+  const labHr=supply==='HT'?20:14;
+  const lines=[
+    {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · houses busbars + 4 CTs (meters by DISCOM)',qty:1,unit:box.total,total:box.total,src:box.src},
+    {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · sized 1.25× I_load ('+Math.round(I_load)+'A)',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
+    {comp:'CTs (shared Main BDM + Check)',spec:ct.ratio+' Class 0.5/0.5S · sized to sanctioned load',qty:4,unit:ct.cost,total:ct.cost*4,src:ct.src},
+    {comp:'Glands + terminals + lugs',spec:'CT secondary wiring + DISCOM termination',qty:1,unit:1500,total:1500,src:'IndiaMART · local'},
+    {comp:'Labour (fab + wiring + test)',spec:labHr+' hr @ ₹500/hr',qty:labHr,unit:500,total:labHr*500,src:'Local fabricator (₹500/hr)'}
+  ];
+  const cost=lines.reduce((s,l)=>s+l.total,0);
+  const margin=Math.round(cost*0.20);
+  return{boxStr,I_load,lines,cost,margin,fair:cost+margin};
+}
+
+function comparisonRow(sheetCost,marketFair,sheetSrc){
+  const v=pct(sheetCost,marketFair);
+  const cls=varCls(v);
+  return '<div class="compare"><div class="compare-row">'+
+    '<div class="cmp sheet"><div class="cmp-lbl">Sheet Cost (from costing sheet)</div><div class="cmp-val">'+inr(sheetCost)+'</div><div class="cmp-src">'+sheetSrc+'</div></div>'+
+    '<div class="cmp market"><div class="cmp-lbl">Market Fair (BOM + 20%)</div><div class="cmp-val">'+inr(marketFair)+'</div><div class="cmp-src">Live bottom-up · Eleczo, Citel, commodity</div></div>'+
+    '<div class="cmp var '+cls+'"><div class="cmp-lbl">Variance</div><div class="cmp-val">'+fp(v)+'</div><div class="cmp-src">'+varLbl(v)+'</div></div>'+
+  '</div></div>';
+}
+
+// Build a small isometric 3D drawing of the enclosure from an "H×W×D" string.
+// Labels: vertical edge = Height, horizontal front edge = Width, receding edge = Depth.
+function boxSVG(dimStr){
+  const p=String(dimStr).split(/[×x ]+/).filter(Boolean).map(parseFloat);
+  if(p.length<3||p.some(isNaN))return'';
+  const H=p[0],W=p[1],D=p[2];
+  // Scale the real mm dims into a compact drawing (max ~58px on the largest axis)
+  const maxDim=Math.max(H,W,D);
+  const s=46/maxDim;
+  const w=W*s, h=H*s, d=D*s*0.5;  // depth foreshortened for isometric feel
+  const ox=30, oy=12;             // origin (front-bottom-left) — leaves room for H label
+  // Front face corners
+  const flb=[ox,oy+h], flt=[ox,oy], frt=[ox+w,oy], frb=[ox+w,oy+h];
+  // Back face (shifted up-right by depth)
+  const blt=[flt[0]+d,flt[1]-d], brt=[frt[0]+d,frt[1]-d], brb=[frb[0]+d,frb[1]-d];
+  const pt=a=>a[0].toFixed(1)+','+a[1].toFixed(1);
+  const svgW=ox+w+d+34, svgH=oy+h+18;
+  return '<svg width="'+Math.ceil(svgW)+'" height="'+Math.ceil(svgH)+'" viewBox="0 0 '+Math.ceil(svgW)+' '+Math.ceil(svgH)+'" '+
+    'style="display:block;margin-top:6px" xmlns="http://www.w3.org/2000/svg">'+
+    // top face
+    '<polygon points="'+pt(flt)+' '+pt(frt)+' '+pt(brt)+' '+pt(blt)+'" fill="#cfe9df" stroke="#0a6450" stroke-width="1" stroke-linejoin="round"/>'+
+    // right (depth) face
+    '<polygon points="'+pt(frt)+' '+pt(frb)+' '+pt(brb)+' '+pt(brt)+'" fill="#aedcca" stroke="#0a6450" stroke-width="1" stroke-linejoin="round"/>'+
+    // front face
+    '<polygon points="'+pt(flt)+' '+pt(frt)+' '+pt(frb)+' '+pt(flb)+'" fill="#e8f5f0" stroke="#0a6450" stroke-width="1.2" stroke-linejoin="round"/>'+
+    // Height label (left vertical edge)
+    '<text x="'+(flt[0]-4)+'" y="'+(oy+h/2+3)+'" font-size="8" fill="#064030" text-anchor="end" font-family="monospace">H '+H+'</text>'+
+    // Width label (front bottom edge)
+    '<text x="'+(ox+w/2)+'" y="'+(oy+h+11)+'" font-size="8" fill="#064030" text-anchor="middle" font-family="monospace">W '+W+'</text>'+
+    // Depth label (receding top-right edge)
+    '<text x="'+(brt[0]+2)+'" y="'+(brt[1]+4)+'" font-size="8" fill="#064030" text-anchor="start" font-family="monospace">D '+D+'</text>'+
+    '</svg>';
+}
+
+function bomTable(bom){
+  let html='<div class="bomhd">Live market BOM — per component</div><div class="tbl-wrap"><table>'+
+    '<thead><tr><th style="min-width:180px">Component</th><th>Specification</th><th>Qty</th><th>Unit ₹</th><th>Total ₹</th><th>Source</th></tr></thead><tbody>';
+  bom.lines.forEach(l=>{
+    // For the MS box line, render a small 3D drawing under the spec text (dims = H × W × D)
+    let specCell=l.spec;
+    if(/MS sheet metal box/i.test(l.comp)){
+      const dim=String(l.spec).match(/(\d+)\s*[×x]\s*(\d+)\s*[×x]\s*(\d+)/);
+      if(dim)specCell=l.spec+boxSVG(dim[1]+'×'+dim[2]+'×'+dim[3]);
+    }
+    html+='<tr><td class="nm">'+l.comp+'</td><td class="sp">'+specCell+'</td><td class="mono">'+l.qty+'</td><td class="mono">'+inr(l.unit)+'</td><td class="mono">'+inr(l.total)+'</td><td class="sp">'+l.src+'</td></tr>';
+  });
+  html+='<tr class="tr-cost"><td colspan="4">Subtotal — vendor BOM cost</td><td class="mono">'+inr(bom.cost)+'</td><td></td></tr>';
+  html+='<tr class="tr-margin"><td colspan="4">+ 20% vendor margin</td><td class="mono">'+inr(bom.margin)+'</td><td></td></tr>';
+  html+='<tr class="tr-total"><td colspan="4">Market-fair selling price</td><td class="mono" style="font-size:14px">'+inr(bom.fair)+'</td><td></td></tr>';
+  return html+'</tbody></table></div>';
+}
+
+// Group blocks by their unique "Max AC current" → render one ACDB panel per unique current.
+// Returns HTML for all ACDB panels + the aggregate results for the overall summary.
+function renderACDBPerBlock(inv,panel,supply,inputs){
+  const blocks=(inputs.blockData||[]).filter(b=>(b.maxAC>0||b.invCap>0));
+  // If we have real per-block data, group by current. Otherwise fall back to single panel.
+  if(blocks.length===0){
+    return renderACDBSingle(inv,panel,supply);
+  }
+  // Group by (rounded current + number of inverter inputs). Two blocks are the "same ACDB"
+  // only if they have BOTH the same output current AND the same number of inverter inputs,
+  // because the input count determines the box size (N in 1 out).
+  const groups={};
+  blocks.forEach(b=>{
+    const amp=b.maxAC>0?b.maxAC:Math.ceil(acCurrent(b.invCap,supply));
+    const nIn=Math.max(1,b.invCount||1);
+    const key=Math.round(amp*100)/100+'|'+nIn;  // unique by current + inputs
+    if(!groups[key])groups[key]={amp:amp,numInputs:nIn,count:0,invCount:0,acdbCostEach:null,caps:[],blocks:[]};
+    groups[key].count++;
+    groups[key].invCount+=(b.invCount||0);
+    groups[key].caps.push(b.invCap||0);
+    groups[key].blocks.push({name:b.name,cap:b.invCap||0,nInv:b.invCount||0});
+    if(b.acdbCost!=null&&b.acdbCost>0)groups[key].acdbCostEach=b.acdbCost;
+  });
+  const sortedKeys=Object.keys(groups).sort((a,b)=>groups[b].amp-groups[a].amp);  // highest current first
+  // Sheet total for ALL ACDBs (from panel.sheetCost or block ACDB costs)
+  const totalSheetFromBlocks=blocks.reduce((s,b)=>s+((b.acdbCost!=null&&b.acdbCost>0)?b.acdbCost:0),0);
+  // Authoritative total: prefer C19 "Total ACDB Cost", then the Cost Summary line, then summed blocks.
+  const grandSheet=(inputs.totalACDBCost!=null&&inputs.totalACDBCost>0)?inputs.totalACDBCost:(panel.sheetCost!=null?panel.sheetCost:(totalSheetFromBlocks>0?totalSheetFromBlocks:null));
+  // Allocate sheet cost across groups proportionally to their count (if we only have a grand total)
+  const totalUnits=blocks.length;
+  let html='';
+  let aggSheet=0,aggMarket=0;
+  sortedKeys.forEach((key,idx)=>{
+    const g=groups[key];
+    const I_acdb=Math.ceil(g.amp);
+    const bom=buildACDB_BOM_byAmps(I_acdb,g.numInputs);  // size box by inputs AND current
+    const marketEach=bom.fair;
+    const marketGroup=marketEach*g.count;
+    // Sheet cost for this group, in priority order:
+    //  1. The block's own "ACDB Cost" from the Multiple Blocks sheet (most accurate)
+    //  2. ACDB Costing table lookup by the block's inverter capacity (vendor cost column)
+    //  3. Proportional split of the grand total (C19 / Cost Summary)
+    let sheetGroup,sheetSrc;
+    const grpKva=(g.caps&&g.caps.length)?g.caps.reduce((a,b)=>a+b,0)/g.caps.length:null;  // avg block kVA
+    const tableRef=grpKva?lookupACDB(grpKva):null;
+    if(g.acdbCostEach!=null){
+      sheetGroup=g.acdbCostEach*g.count;
+      sheetSrc='ACDB for Multiple Blocks · ₹'+g.acdbCostEach.toLocaleString('en-IN')+' each × '+g.count;
+    }else if(tableRef){
+      sheetGroup=tableRef[4]*g.count;
+      sheetSrc='ACDB Costing tab · '+grpKva.toFixed(1)+' kVA → ₹'+tableRef[4].toLocaleString('en-IN')+' each × '+g.count;
+    }else if(grandSheet!=null){
+      sheetGroup=Math.round(grandSheet*(g.count/totalUnits));
+      sheetSrc='Allocated '+g.count+'/'+totalUnits+' of sheet total '+inr(grandSheet);
+    }else{
+      sheetGroup=null;sheetSrc='No sheet cost found';
+    }
+    aggSheet+=sheetGroup||0;
+    aggMarket+=marketGroup;
+    const capList=g.caps.filter(c=>c>0);
+    const capNote=capList.length?capList.map(c=>c+'kVA').join(', '):'';
+    const cfg=bom.ins+' in 1 out';
+    const encLabel=g.count===1?'1 enclosure':g.count+' enclosures';
+    // Describe which inverters this ACDB serves. Match each block's capacity to the
+    // project inverter mix so the label reads e.g. "Block-1 (2×33.3kVA)".
+    function blockInverterDesc(blk){
+      const mix=(inv&&inv.mix)?inv.mix:[];
+      // exact single-model fit: cap / model.kva is a whole number
+      for(const m of mix){
+        if(m.kva&&blk.cap>0){
+          const n=blk.cap/m.kva;
+          if(Math.abs(n-Math.round(n))<0.05&&Math.round(n)===blk.nInv)return blk.nInv+'×'+m.kva+'kVA';
+        }
+      }
+      // fallback: just show count + total kVA
+      return blk.nInv+' inv · '+round2(blk.cap)+'kVA';
+    }
+    const servesList=g.blocks.map(b=>b.name+' ('+blockInverterDesc(b)+')').join(', ');
+    const invModels=(inv&&inv.mix&&inv.mix.length)?inv.mix.map(m=>m.model.trim()).join(' / '):'';
+    html+='<div class="sec">'+
+      '<div class="sec-hd"><div class="sec-title"><div class="sec-ico ic-g">A</div>ACDB-'+(idx+1)+' Panel · '+g.numInputs+'×inv · '+I_acdb+'A</div>'+mkB(pct(sheetGroup,marketGroup))+'</div>'+
+      '<div class="pinfo">'+
+        '<div><div class="pi-lbl">Config</div><div class="pi-val">'+cfg+'</div></div>'+
+        '<div><div class="pi-lbl">Max AC current</div><div class="pi-val">'+I_acdb+'A</div></div>'+
+        '<div><div class="pi-lbl">Enclosures · Inverters</div><div class="pi-val">'+g.count+' box'+(g.count>1?'es':'')+' · '+g.invCount+' inv</div></div>'+
+        '<div style="grid-column:1/-1"><div class="pi-lbl">For inverters</div><div class="pi-val" style="font-size:13px">'+(invModels||'—')+'</div></div>'+
+      '</div>'+
+      comparisonRow(sheetGroup,marketGroup,sheetSrc+(g.count>1?' · market '+inr(marketEach)+' each':''))+
+      bomTable(bom)+
+      '<div class="info-box">'+g.numInputs+' inverter'+(g.numInputs>1?'s':'')+' feed each ACDB → <strong>'+cfg+'</strong> enclosure ('+bom.boxStr+' mm). This is <strong>'+encLabel+'</strong>'+(g.count>1?' (identical config); BOM is per enclosure, comparison ×'+g.count:'')+'. Serves '+servesList+(invModels?' — inverter type: '+invModels:'')+'.<br><em>Note: the "ACDB - N no.s" line in the quote counts inverters, not enclosures — actual enclosure count comes from the active blocks in the "ACDB for Multiple Blocks" sheet.</em></div>'+
+    '</div>';
+  });
+  // store aggregate for overall summary
+  panel._aggSheet=aggSheet;panel._aggMarket=aggMarket;
+  return html;
+}
+
+// Single ACDB fallback (no multi-block data) — sizes by system capacity / qty
+function renderACDBSingle(inv,panel,supply){
+  const qty=panel.qty||1;
+  const perUnitKw=inv.kva/qty;
+  const I_solar=Math.ceil(acCurrent(perUnitKw,supply));
+  const bom=buildACDB_BOM(perUnitKw,supply,I_solar);
+  if(!bom)return'';
+  const ref=lookupACDB(perUnitKw);
+  const ins=ref[2],boxStr=ref[3],vendorCost=ref[4],amps=ref[5];
+  let sheetCost=panel.sheetCost;
+  let sheetSrc;
+  if(sheetCost!=null){sheetSrc=panel.source+(qty>1?' · '+qty+' × '+inr(sheetCost/qty)+' each':'')}
+  else{sheetCost=vendorCost*qty;sheetSrc='ACDB Costing tab · '+inr(vendorCost)+(qty>1?' × '+qty:'')}
+  const mktTotal=bom.fair*qty;
+  panel._aggSheet=sheetCost;panel._aggMarket=mktTotal;
+  return '<div class="sec">'+
+    '<div class="sec-hd"><div class="sec-title"><div class="sec-ico ic-g">A</div>ACDB Panel</div>'+mkB(pct(sheetCost,mktTotal))+'</div>'+
+    '<div class="pinfo">'+
+      '<div><div class="pi-lbl">Box H×W×D (mm)</div><div class="pi-val">'+boxStr+'</div></div>'+
+      '<div><div class="pi-lbl">Config</div><div class="pi-val">'+ins+' in 1 out</div></div>'+
+      '<div><div class="pi-lbl">Rated Amps</div><div class="pi-val">'+amps+'A</div></div>'+
+      '<div><div class="pi-lbl">I_solar · Qty</div><div class="pi-val">'+I_solar+'A · '+qty+' no.s</div></div>'+
+    '</div>'+
+    comparisonRow(sheetCost,mktTotal,sheetSrc)+
+    bomTable(bom)+
+  '</div>';
+}
+
+function renderCombiner(inv,panel,supply,inputs){
+  // ─── Determine actual combined current from block data (preferred)
+  // or fall back to inv.kva × blocks if multi-block tab is blank.
+  let I_comb=0, ins=0, blockSummary='';
+  if(inputs.blockData && inputs.blockData.length>0){
+    // Sum the max AC current from each populated block
+    let summedFromBlocks=0;
+    let totalInvCount=0;
+    inputs.blockData.forEach(b=>{
+      // Prefer the per-block max AC current; if not filled, compute from kVA
+      const blockI=b.maxAC>0?b.maxAC:(b.invCap>0?acCurrent(b.invCap,supply):0);
+      summedFromBlocks+=blockI;
+      totalInvCount+=(b.invCount||0);
+    });
+    if(summedFromBlocks>0){
+      I_comb=Math.ceil(summedFromBlocks);
+      ins=inputs.blockData.length;  // one feeder per block
+      blockSummary=inputs.blockData.map(b=>b.name+' ('+(b.invCount||0)+' inv, '+Math.ceil(b.maxAC>0?b.maxAC:acCurrent(b.invCap||0,supply))+'A)').join(' · ');
+    }else if(inputs.totalCurrent>0){
+      // Use the totals row if blocks are blank but total is filled
+      I_comb=Math.ceil(inputs.totalCurrent);
+      ins=Math.max(2,inputs.blockData.length);
+    }
+  }
+  // Final fallback: kVA × estimated blocks
+  if(I_comb===0){
+    const I_per=Math.ceil(acCurrent(inv.kva,supply));
+    const blocks=Math.max(2,inputs.blocks||2);
+    I_comb=I_per*blocks;
+    ins=Math.min(10,blocks);
+    blockSummary='Estimated from total kVA ÷ '+blocks+' blocks (multi-block tab not fully filled)';
+  }
+  ins=Math.min(10,Math.max(2,ins));
+
+  const bom=buildCombiner_BOM(I_comb,ins);
+  const sheetCost=panel.sheetCost;
+  const userDesc=panel.userDesc||'AC Combiner Box';
+  let sheetSrc;
+  if(sheetCost!=null){
+    sheetSrc='"'+userDesc.substring(0,60)+'" · '+panel.source+' · '+(panel.qty||1)+' × '+inr(sheetCost/(panel.qty||1));
+  }else{
+    sheetSrc='Line item found but no price entered';
+  }
+  const mktTotal=bom.fair*(panel.qty||1);
+  return '<div class="sec">'+
+    '<div class="sec-hd"><div class="sec-title"><div class="sec-ico ic-a">C</div>AC Combiner Box <span style="font-size:10px;font-weight:600;color:var(--t3);margin-left:6px">(Extras line item)</span></div>'+mkB(pct(sheetCost,mktTotal))+'</div>'+
+    '<div class="pinfo">'+
+      '<div><div class="pi-lbl">Box H×W×D (mm)</div><div class="pi-val">'+bom.box+'</div></div>'+
+      '<div><div class="pi-lbl">Inputs</div><div class="pi-val">'+ins+' in 1 out</div></div>'+
+      '<div><div class="pi-lbl">Combined Current</div><div class="pi-val">'+Math.round(I_comb)+'A</div></div>'+
+      '<div><div class="pi-lbl">Qty</div><div class="pi-val">'+(panel.qty||1)+' no.s</div></div>'+
+    '</div>'+
+    comparisonRow(sheetCost,mktTotal,sheetSrc)+
+    bomTable(bom)+
+    '<div class="info-box"><strong>Manually entered as Extras line item</strong> by EcoSoch when multi-inverter sites need a combiner panel. Combined current sized to '+Math.round(I_comb)+'A from '+ins+' incoming feeders. '+(blockSummary?'<br><strong>Block breakdown:</strong> '+blockSummary:'')+'</div>'+
+  '</div>';
+}
+
+// AC Combiner — render a "MISSING" placeholder when multi-block project exists
+// but no Combiner line was found in Extras (user forgot to add it)
+function renderCombinerMissing(inv,inputs,supply){
+  // Compute what they SHOULD have entered
+  let I_comb=0,ins=0,blockSummary='';
+  if(inputs.blockData && inputs.blockData.length>=2){
+    inputs.blockData.forEach(b=>{
+      const blockI=b.maxAC>0?b.maxAC:(b.invCap>0?acCurrent(b.invCap,supply):0);
+      I_comb+=blockI;
+    });
+    ins=inputs.blockData.length;
+    blockSummary=inputs.blockData.map(b=>b.name+' ('+(b.invCount||0)+' inv, '+Math.ceil(b.maxAC>0?b.maxAC:acCurrent(b.invCap||0,supply))+'A)').join(' · ');
+  }
+  if(I_comb===0)return'';
+  I_comb=Math.ceil(I_comb);
+  ins=Math.min(10,Math.max(2,ins));
+  const bom=buildCombiner_BOM(I_comb,ins);
+  return '<div class="sec">'+
+    '<div class="sec-hd"><div class="sec-title"><div class="sec-ico ic-a">C</div>AC Combiner Box <span style="font-size:10px;font-weight:600;color:var(--r);margin-left:6px">(MISSING from Extras)</span></div><span class="badge bWarn">Not in quote</span></div>'+
+    '<div class="pinfo">'+
+      '<div><div class="pi-lbl">Box H×W×D (mm)</div><div class="pi-val">'+bom.box+'</div></div>'+
+      '<div><div class="pi-lbl">Inputs</div><div class="pi-val">'+ins+' in 1 out</div></div>'+
+      '<div><div class="pi-lbl">Combined Current</div><div class="pi-val">'+I_comb+'A</div></div>'+
+      '<div><div class="pi-lbl">Expected Price</div><div class="pi-val">'+inr(bom.fair)+'</div></div>'+
+    '</div>'+
+    '<div class="warn-box"><strong>⚠ AC Combiner Box appears to be missing from this quote.</strong> '+inputs.blockData.length+' inverter blocks were detected in the "ACDB for Multiple Blocks" tab, which means a combiner panel should be added in Extras (Final Worksheet rows 67-70 or 83-86, Cost Summary rows 34-37 or 50-53). Expected market-fair price: <strong>'+inr(bom.fair)+'</strong>. Block breakdown: '+blockSummary+'</div>'+
+    bomTable(bom)+
+  '</div>';
+}
+
+function renderSolarLT(inv,panel,supply,inputs){
+  const kw=inv.kva;
+  // I_solar: prefer the "Total Current for all..." (C18 of Multiple Blocks tab = 438A).
+  // Fall back to deriving from system kVA only if the total current isn't available.
+  const I_solar=(inputs.totalCurrent&&inputs.totalCurrent>0)?Math.ceil(inputs.totalCurrent):Math.ceil(acCurrent(kw,supply));
+  const I_src=(inputs.totalCurrent&&inputs.totalCurrent>0)?'Multiple Blocks tab C18':'derived from kVA';
+  const smart=panel.smartMeter||inputs.smartMeter==='Yes';
+  const bom=buildSolarLT_BOM(kw,supply,I_solar,smart);
+  const ref=lookupSolarLT(kw,smart);
+  let sheetCost=panel.sheetCost;
+  let sheetSrc;
+  if(sheetCost!=null){sheetSrc=panel.source+' · '+(smart?'Smart':'Normal')+' meter'}
+  else if(ref){sheetCost=ref.selected*(panel.qty||1);sheetSrc='Solar LT Panel Costing tab · '+ref.range+' · '+(smart?'Smart':'Normal')+' meter'}
+  const mktTotal=bom.fair*(panel.qty||1);
+  return '<div class="sec">'+
+    '<div class="sec-hd"><div class="sec-title"><div class="sec-ico ic-b">L</div>Solar LT Panel</div>'+mkB(pct(sheetCost,mktTotal))+'</div>'+
+    '<div class="pinfo">'+
+      '<div><div class="pi-lbl">Box H×W×D (mm)</div><div class="pi-val">'+bom.boxStr+'</div></div>'+
+      '<div><div class="pi-lbl">kW Range</div><div class="pi-val">'+(ref?ref.range:'—')+'</div></div>'+
+      '<div><div class="pi-lbl">Meter Type</div><div class="pi-val">'+(smart?'Smart':'Normal')+'</div></div>'+
+      '<div><div class="pi-lbl">I_solar · Qty</div><div class="pi-val">'+I_solar+'A · '+(panel.qty||1)+' no.s</div></div>'+
+    '</div>'+
+    comparisonRow(sheetCost,mktTotal,sheetSrc)+
+    bomTable(bom)+
+    '<div class="info-box">The sheet price bundles the Smart generation meter + shunt coil + Selec relay + AC SPD, so the market BOM includes all of these. The Smart Generation Meter is CT-operated (its metering CTs are built in), so no separate CTs are added. I_solar = '+I_solar+'A ('+I_src+'). Meter price tier: '+inr(bom.meterPrice)+' for this kW range.</div>'+
+  '</div>';
+}
+
+function renderMainMeter(inv,panel,supply,inputs){
+  const SL=inputs.sanctionedLoad;
+  const effSL=SL||inv.kva;
+  const applicableCat=applicableCategory(effSL);
+  // Build scenario tables — one per category, with applicable badge
+  let scenTables='';
+  for(const catKey of ['HT','LT3CT','LTCT','LTNOCT']){
+    const cat=MAIN_METER_SCENARIOS[catKey];
+    const isApp=(catKey===applicableCat);
+    scenTables+='<div style="margin-top:14px">'+
+      '<div style="font-size:11px;font-weight:700;color:'+(isApp?'var(--g)':'var(--t3)')+';margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+        cat.label+
+        (isApp?' <span style="background:#dcfff4;color:var(--gd);padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700">✓ Applicable</span>':'')+
+      '</div>'+
+      '<div class="tbl-wrap"><table>'+
+        '<thead><tr><th style="width:36px">#</th><th style="min-width:220px">Scenario</th><th>Scope / Box</th><th>Sheet ₹</th><th>Market ₹</th><th>Variance</th></tr></thead><tbody>';
+    for(const s of cat.scenarios){
+      const mkt=scenarioMarket(s);
+      const v=pct(s.sheet,mkt.fair);
+      const cls=varCls(v);
+      const color=cls==='ok'?'var(--g)':cls==='warn'?'var(--a)':cls==='err'?'var(--r)':'var(--t3)';
+      scenTables+='<tr>'+
+        '<td class="mono">'+s.id+'</td>'+
+        '<td class="nm">'+s.name+'</td>'+
+        '<td class="sp">'+s.dim+'</td>'+
+        '<td class="mono">'+inr(s.sheet)+'</td>'+
+        '<td class="mono">'+inr(mkt.fair)+'</td>'+
+        '<td class="mono" style="font-weight:700;color:'+color+'">'+fp(v)+'</td>'+
+      '</tr>';
+    }
+    scenTables+='</tbody></table></div></div>';
+  }
+  // Selected scenario for the applicable category (default to scenario #1)
+  const appCat=MAIN_METER_SCENARIOS[applicableCat];
+  const selScen=appCat.scenarios[0];
+  const selMkt=scenarioMarket(selScen);
+  let sheetCost=panel.sheetCost;
+  let sheetSrc;
+  if(sheetCost!=null){
+    sheetSrc=panel.source;
+  }else{
+    sheetCost=selScen.sheet*(panel.qty||1);
+    sheetSrc='Main Meter Cubicle tab · '+selScen.name;
+  }
+  const mktTotal=selMkt.fair*(panel.qty||1);
+  // Header badge — uses the SELECTED scenario for the applicable category
+  const headerBadge=mkB(pct(sheetCost,mktTotal));
+  // Detailed BOM table for the applicable scenario
+  const selBom={lines:selScen.bom.map(l=>({comp:l.comp,spec:'',qty:1,unit:l.total,total:l.total,src:'Market estimate'})),cost:selMkt.cost,margin:selMkt.margin,fair:selMkt.fair};
+  return '<div class="sec">'+
+    '<div class="sec-hd">'+
+      '<div class="sec-title"><div class="sec-ico ic-r">M</div>Main / HT Meter Cubicle</div>'+
+      (SL?headerBadge:'<span class="badge bGray">SL missing — using kVA</span>')+
+    '</div>'+
+    '<div class="pinfo">'+
+      '<div><div class="pi-lbl">Sanctioned Load</div><div class="pi-val">'+(SL?SL+' kW':'Not in sheet — using '+round2(inv.kva)+' kVA as proxy')+'</div></div>'+
+      '<div><div class="pi-lbl">Supply</div><div class="pi-val">'+supply+'</div></div>'+
+      '<div><div class="pi-lbl">Applicable Category</div><div class="pi-val">'+appCat.label+'</div></div>'+
+      '<div><div class="pi-lbl">Qty</div><div class="pi-val">'+(panel.qty||1)+' no.s</div></div>'+
+    '</div>'+
+    (!SL?'<div class="warn-box">Sanctioned load not found in Final Worksheet (row 3, column C). Applicable category determined using inverter capacity ('+round2(inv.kva)+' kVA) as a proxy. Fill in the sanctioned load for accurate validation.</div>':'')+
+    // 3-column sheet vs market vs variance for the applicable/default scenario
+    comparisonRow(sheetCost,mktTotal,sheetSrc)+
+    // Full scenario tables
+    '<div style="padding:14px 16px;background:#fbfaf6;border-bottom:1px solid var(--bdr)">'+
+      '<div class="bomhd" style="padding:0 0 6px 0;border:none">Sheet meter cubicle scenarios — bottom-up market BOM comparison</div>'+
+      scenTables+
+    '</div>'+
+    // BOM detail for the applicable scenario
+    bomTable(selBom)+
+    '<div class="info-box"><strong>Main BDM + Check meter excluded</strong> — both supplied by DISCOM free of cost. CTs (Class 0.5 / 0.5S) shown above are shared between Main BDM and Check meter, sized to the sanctioned load. The market BOMs above include only cubicle materials, fabrication, and installation — meters themselves are not validated.</div>'+
+  '</div>';
+}
+
+function renderInverterCard(inv,proj,inputs){
+  const pLab={string:'String',enphase:'Enphase',solaredge:'SolarEdge'};
+  const mix=(inv&&inv.mix&&inv.mix.length)?inv.mix:(inv?[{model:inv.id,qty:1,kva:inv.kva}]:[]);
+  let rows='';
+  let totalUnits=0;
+  mix.forEach(m=>{
+    totalUnits+=(m.qty||1);
+    rows+='<tr>'+
+      '<td class="nm">'+m.model+'</td>'+
+      '<td class="mono">'+(m.kva!=null?m.kva+' kVA':'—')+'</td>'+
+      '<td class="mono">'+(m.qty||1)+'</td>'+
+      '<td class="mono">'+(m.kva!=null?round2(m.kva*(m.qty||1))+' kVA':'—')+'</td>'+
+    '</tr>';
+  });
+  const srcNote=inv&&inv.fromSummary
+    ? 'Picked from the "Inverters:" summary line in the Inverter Selection sheet (full project mix).'
+    : (inv&&inv.fromSelection
+        ? 'Picked from the selected models (rows with a quantity or cost) in the Inverter Selection sheet.'
+        : (inv&&inv.weakDetect
+            ? '⚠ Could not find a populated selection — fell back to the first listed model. VERIFY this is correct; the sheet may not have the inverter quantity/cost filled in.'
+            : 'Detected from the costing sheet line item.'));
+  const weakWarn=inv&&inv.weakDetect;
+  const stringsNote=inv&&inv.strings?(' · '+inv.strings+' strings'):'';
+  // Exact capacity as it appears in the Inverter Selection sheet (float noise stripped, true decimals kept)
+  const exactKva=inv?cleanNum(inv.kva):0;
+  return '<div class="sec">'+
+    '<div class="sec-hd"><div class="sec-title"><div class="sec-ico" style="background:#0f1210">⚡</div>Inverter Selected <span style="font-size:10px;font-weight:600;color:var(--t3);margin-left:6px">— verify this matches your design</span></div>'+
+      (weakWarn?'<span class="badge bWarn">⚠ Verify</span> ':'')+'<span class="badge bInfo">'+pLab[proj]+'</span></div>'+
+    '<div class="pinfo">'+
+      '<div><div class="pi-lbl">Capacity (from Inverter Selection sheet)</div><div class="pi-val" style="font-size:16px">'+exactKva+' kVA</div></div>'+
+      '<div><div class="pi-lbl">Total inverters</div><div class="pi-val">'+totalUnits+' no.s</div></div>'+
+      '<div><div class="pi-lbl">Strings</div><div class="pi-val">'+(inv&&inv.strings?inv.strings:'—')+'</div></div>'+
+      '<div><div class="pi-lbl">Project DC size</div><div class="pi-val">'+(inputs&&inputs.projectSizeKwp?cleanNum(inputs.projectSizeKwp)+' kWp':'—')+'</div></div>'+
+    '</div>'+
+    '<div class="tbl-wrap"><table>'+
+      '<thead><tr><th style="min-width:200px">Inverter model</th><th>Unit kVA</th><th>Qty</th><th>Subtotal kVA</th></tr></thead>'+
+      '<tbody>'+rows+
+      '<tr class="tr-total"><td>Total — '+totalUnits+' inverter'+(totalUnits!==1?'s':'')+'</td><td></td><td class="mono">'+totalUnits+'</td><td class="mono" style="font-size:14px">'+exactKva+' kVA</td></tr>'+
+      '</tbody></table></div>'+
+    '<div class="'+(weakWarn?'warn-box':'info-box')+'">'+srcNote+stringsNote+'</div>'+
+  '</div>';
+}
+
+function renderBanner(proj,inv,inputs,supply,panels){
+  const pLab={string:'String',enphase:'Enphase',solaredge:'SolarEdge'};
+  const kw=inv?.kva||0;
+  const I_load=inputs.sanctionedLoad?Math.ceil(acCurrent(inputs.sanctionedLoad,supply)):null;
+  const present=Object.entries(panels).filter(([,v])=>v.present).map(([k])=>({acdb:'ACDB',combiner:'AC Combiner',solarLT:'Solar LT',mainMeter:'Main/HT Meter'}[k]));
+  // Inverter display — show detected model + note if we're using project size for sizing
+  let invDisplay=inv?.id||'—';
+  if(inv?.usingProjectSize&&inv?.detectedKva)invDisplay=inv.id+' (×many)';
+  const capDisplay=inv?.usingProjectSize?(cleanNum(kw)+' kWp (system)'):(cleanNum(kw)+' kW');
+  document.getElementById('banner').innerHTML=
+    '<div class="bn-item"><div class="bn-l">Project</div><div class="bn-v">'+pLab[proj]+'</div></div>'+
+    '<div class="bn-item"><div class="bn-l">Inverter</div><div class="bn-v">'+invDisplay+'</div></div>'+
+    '<div class="bn-item"><div class="bn-l">Capacity</div><div class="bn-v">'+capDisplay+'</div></div>'+
+    '<div class="bn-item"><div class="bn-l">Sanctioned Load</div><div class="bn-v">'+(inputs.sanctionedLoad?inputs.sanctionedLoad+' kW':'—')+'</div></div>'+
+    '<div class="bn-item"><div class="bn-l">Supply · PF</div><div class="bn-v">'+supply+' · '+pfFor(supply)+'</div></div>'+
+    '<div class="bn-item"><div class="bn-l">I_load</div><div class="bn-v">'+(I_load?I_load+'A':'—')+'</div></div>'+
+    '<div class="bn-item"><div class="bn-l">Panels in quote</div><div class="bn-v">'+(present.join(' · ')||'None')+'</div></div>';
+}
+
+function renderOverall(panels,results){
+  let ts=0,tm=0,n=0;
+  Object.keys(panels).forEach(k=>{if(!panels[k].present)return;const r=results[k];if(r&&r.sheetCost!=null)ts+=r.sheetCost;if(r&&r.marketFair!=null)tm+=r.marketFair;n++});
+  const v=pct(ts,tm);
+  const cls=varCls(v);
+  return '<h3>Overall validation — '+n+' panel'+(n!==1?'s':'')+' validated</h3>'+
+    '<div class="overall-grid">'+
+      '<div class="ovr-card"><div class="ovr-lbl">Total Sheet Cost</div><div class="ovr-val">'+inr(ts)+'</div><div class="ovr-sub">From costing sheet</div></div>'+
+      '<div class="ovr-card"><div class="ovr-lbl">Total Market Fair</div><div class="ovr-val">'+inr(tm)+'</div><div class="ovr-sub">BOM + 20% margin</div></div>'+
+      '<div class="ovr-card '+cls+'"><div class="ovr-lbl">Overall Variance</div><div class="ovr-val">'+fp(v)+'</div><div class="ovr-sub">'+varLbl(v)+'</div></div>'+
+      '<div class="ovr-card"><div class="ovr-lbl">Sheet vs Market</div><div class="ovr-val">'+inr(ts-tm)+'</div><div class="ovr-sub">'+(ts>tm?'Sheet is higher':'Sheet is lower')+'</div></div>'+
+    '</div>';
+}
+
+function processWorkbook(file){
+  const st=document.getElementById('st');
+  st.className='st';st.textContent='⏳ Reading '+file.name+' …';
+  // Clear any previous results IMMEDIATELY so stale data can never linger on screen
+  document.getElementById('main').innerHTML='';
+  document.getElementById('overall').innerHTML='';
+  document.getElementById('banner').innerHTML='';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      if(typeof XLSX==='undefined')throw new Error('Excel parser failed to load. Check your internet.');
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const proj=detectProj(file.name);
+      let inv=getInverter(wb,proj);
+      if(!inv){
+        const kw=parseFloat(prompt('Could not auto-detect active inverter.\n\nEnter project capacity in kW:'));
+        if(isNaN(kw)||kw<=0)throw new Error('No inverter & no manual kW entered.');
+        inv={id:'Manual entry — '+kw+' kW',kva:kw};
+      }
+      if(!inv.kva){
+        const kw=parseFloat(prompt('Inverter "'+inv.id+'" has no kVA. Enter kW:'));
+        if(isNaN(kw)||kw<=0)throw new Error('Cannot proceed without kVA.');
+        inv.kva=kw;
+      }
+      const inputs=getInputs(wb);
+      // SolarEdge / multi-inverter fix: the detected "inverter" is often a single small unit
+      // (e.g. 3 kVA optimizer). If the project size (kWp) is materially larger, use it as the
+      // effective system capacity for ACDB / Solar LT sizing — that's what the panels are sized to.
+      if(inputs.projectSizeKwp && (!inv.kva || inputs.projectSizeKwp > inv.kva*1.5)){
+        inv.detectedKva=inv.kva;  // keep the original for display
+        inv.kva=inputs.projectSizeKwp;
+        inv.usingProjectSize=true;
+      }
+      const supply=determineSupply(inputs.sanctionedLoad);
+      const panels=scanPanels(wb);
+      const anyPresent=Object.values(panels).some(p=>p.present);
+      if(!anyPresent){panels.acdb.present=true;panels.acdb.qty=1;panels.solarLT.present=true;panels.solarLT.qty=1;panels.mainMeter.present=true;panels.mainMeter.qty=1}
+
+      const results={};
+      let html='';
+      if(panels.acdb.present){
+        html+=renderACDBPerBlock(inv,panels.acdb,supply,inputs);
+        // renderACDBPerBlock stores aggregate sheet/market on the panel object
+        results.acdb={sheetCost:panels.acdb._aggSheet!=null?panels.acdb._aggSheet:panels.acdb.sheetCost,marketFair:panels.acdb._aggMarket!=null?panels.acdb._aggMarket:null};
+      }
+      if(panels.combiner.present){
+        // Use the same logic as renderCombiner to compute combined current from block data
+        let I_comb=0, ins=0;
+        if(inputs.blockData && inputs.blockData.length>0){
+          inputs.blockData.forEach(b=>{
+            const bi=b.maxAC>0?b.maxAC:(b.invCap>0?acCurrent(b.invCap,supply):0);
+            I_comb+=bi;
+          });
+          ins=inputs.blockData.length;
+        }
+        if(I_comb===0){
+          const I_per=Math.ceil(acCurrent(inv.kva,supply));
+          const blocks=Math.max(2,inputs.blocks||2);
+          I_comb=I_per*blocks;ins=Math.min(10,blocks);
+        }
+        ins=Math.min(10,Math.max(2,ins));
+        const bom=buildCombiner_BOM(Math.ceil(I_comb),ins);
+        results.combiner={sheetCost:panels.combiner.sheetCost,marketFair:bom.fair*(panels.combiner.qty||1)};
+        html+=renderCombiner(inv,panels.combiner,supply,inputs);
+      }
+      // NOTE: AC Combiner is only shown when actually present in the quote (no "missing" card).
+      if(panels.solarLT.present){
+        const kw=inv.kva;
+        const I_solar=(inputs.totalCurrent&&inputs.totalCurrent>0)?Math.ceil(inputs.totalCurrent):Math.ceil(acCurrent(kw,supply));
+        const smart=panels.solarLT.smartMeter||inputs.smartMeter==='Yes';
+        const bom=buildSolarLT_BOM(kw,supply,I_solar,smart);const ref=lookupSolarLT(kw,smart);
+        const sc=panels.solarLT.sheetCost!=null?panels.solarLT.sheetCost:(ref?ref.selected*(panels.solarLT.qty||1):null);
+        results.solarLT={sheetCost:sc,marketFair:bom.fair*(panels.solarLT.qty||1)};
+        html+=renderSolarLT(inv,panels.solarLT,supply,inputs);
+      }
+      if(panels.mainMeter.present){
+        const effSL=inputs.sanctionedLoad||inv.kva;
+        const appCat=MAIN_METER_SCENARIOS[applicableCategory(effSL)];
+        const selScen=appCat.scenarios[0];
+        const selMkt=scenarioMarket(selScen);
+        const sc=panels.mainMeter.sheetCost!=null?panels.mainMeter.sheetCost:selScen.sheet*(panels.mainMeter.qty||1);
+        results.mainMeter={sheetCost:sc,marketFair:selMkt.fair*(panels.mainMeter.qty||1)};
+        html+=renderMainMeter(inv,panels.mainMeter,supply,inputs);
+      }
+
+      renderBanner(proj,inv,inputs,supply,panels);
+      // Prepend a freshness stamp so the user can confirm THIS upload was processed (not stale)
+      const now=new Date();
+      let sheetBadge='';
+      if(SHEET_CSV_URL){
+        if(SHEET.loaded){
+          const bcount=SHEET.breakers?(SHEET.breakers.MCB.length+SHEET.breakers.MCCB.length+SHEET.breakers.ACB.length):0;
+          const bTxt=SHEET.breakers?(bcount+' breakers (MCB '+SHEET.breakers.MCB.length+' · MCCB '+SHEET.breakers.MCCB.length+' · ACB '+SHEET.breakers.ACB.length+')'):'breaker tab not read';
+          const st=resolveSteel();
+          sheetBadge='<div style="font-size:11px;margin-bottom:10px;padding:10px 12px;background:#e8f5f0;border-radius:7px;color:#0a6450">'+
+            '🟢 <strong>Reading your Google Sheet</strong> · Table: '+SHEET.rows.length+' items · '+bTxt+
+            '<br><span style="color:#3a7a68">Steel used: <strong>₹'+st.rate+'/kg</strong> — '+st.src+'</span>'+
+            '<br><span style="color:#3a7a68">read '+new Date(SHEET.fetchedAt).toLocaleTimeString()+'</span>'+
+          '</div>';
+        }else{
+          const fileWarn=(location.protocol==='file:')?'<br><span style="color:#b07a20"><strong>Likely cause:</strong> you opened this file directly (file://). Browsers block reading Google from a file:// page. Host it (GitHub Pages) or serve over http, and it will work.</span>':'';
+          sheetBadge='<div style="font-size:11px;margin-bottom:10px;padding:10px 12px;background:#fff3e0;border-radius:7px;color:#9a6a00">'+
+            '🟡 <strong>Could NOT read your Google Sheet</strong> — '+(SHEET.error||'unknown')+'. All prices below are IndiaMART reference, not Project base.'+
+            fileWarn+
+            '<br><span style="color:#b07a20">Also check: sheet → Share → "Anyone with the link → Viewer".</span>'+
+          '</div>';
+        }
+      }
+      const stamp='<div style="font-size:11px;color:var(--t3);margin-bottom:10px;padding:8px 12px;background:#f0ede8;border-radius:7px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">'+
+        '<span>📄 <strong>'+file.name+'</strong></span>'+
+        '<span>Processed '+now.toLocaleTimeString()+' · '+now.toLocaleDateString()+'</span>'+
+      '</div>'+sheetBadge;
+      document.getElementById('overall').innerHTML=stamp+renderOverall(panels,results);
+      document.getElementById('main').innerHTML=renderInverterCard(inv,proj,inputs)+html;
+      document.getElementById('uploadWrap').style.display='none';
+      document.getElementById('resultsWrap').style.display='block';
+      document.body.classList.add('results-visible');
+      window.scrollTo(0,0);
+      st.className='st ok';st.textContent='✓ Validation complete';
+    }catch(err){
+      st.className='st err';st.textContent='Error: '+err.message;
+      console.error(err);
+    }
+  };
+  reader.onerror=()=>{st.className='st err';st.textContent='Failed to read the file.'};
+  reader.readAsArrayBuffer(file);
+}
+
+async function handleFile(file){
+  if(!file)return;
+  const n=(file.name||'').toLowerCase();
+  if(!n.endsWith('.xlsx')&&!n.endsWith('.xls')){const st=document.getElementById('st');st.className='st err';st.textContent='Please pick an Excel file (.xlsx / .xls). Got: '+file.name;return}
+  const st=document.getElementById('st');
+  if(SHEET_CSV_URL&&!SHEET.loaded){st.className='st';st.textContent='⏳ Loading prices from Google Sheet…';await loadSheet();}
+  processWorkbook(file);
+}
+
+function resetUI(){
+  document.getElementById('resultsWrap').style.display='none';
+  document.getElementById('uploadWrap').style.display='flex';
+  document.body.classList.remove('results-visible');
+  document.getElementById('st').textContent='';
+  document.getElementById('fi').value='';
+  document.getElementById('dz').classList.remove('over');
+  document.getElementById('main').innerHTML='';
+  document.getElementById('overall').innerHTML='';
+  document.getElementById('banner').innerHTML='';
+  window.scrollTo({top:0});
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  loadSheet();  // begin loading Google Sheet prices on startup
+  const fi=document.getElementById('fi');
+  const dz=document.getElementById('dz');
+  fi.addEventListener('change',function(){if(fi.files&&fi.files[0]){handleFile(fi.files[0]);setTimeout(()=>{fi.value=''},200)}});
+  dz.addEventListener('click',()=>fi.click());
+  ['dragenter','dragover'].forEach(ev=>{dz.addEventListener(ev,e=>{e.preventDefault();e.stopPropagation();dz.classList.add('over')})});
+  dz.addEventListener('dragleave',e=>{e.preventDefault();dz.classList.remove('over')});
+  dz.addEventListener('drop',e=>{e.preventDefault();e.stopPropagation();dz.classList.remove('over');if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+  ['dragover','drop'].forEach(ev=>{document.addEventListener(ev,e=>{if(e.dataTransfer&&Array.from(e.dataTransfer.types||[]).includes('Files'))e.preventDefault()})});
+  document.getElementById('homeBtn').addEventListener('click',resetUI);
+  document.getElementById('resetBtn').addEventListener('click',resetUI);
+});
+</script>
+</body>
+</html>

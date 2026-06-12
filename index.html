@@ -1053,51 +1053,11 @@ function comparisonRow(sheetCost,marketFair,sheetSrc){
   '</div></div>';
 }
 
-// Build a small isometric 3D drawing of the enclosure from an "H×W×D" string.
-// Labels: vertical edge = Height, horizontal front edge = Width, receding edge = Depth.
-function boxSVG(dimStr){
-  const p=String(dimStr).split(/[×x ]+/).filter(Boolean).map(parseFloat);
-  if(p.length<3||p.some(isNaN))return'';
-  const H=p[0],W=p[1],D=p[2];
-  // Scale the real mm dims into a compact drawing (max ~58px on the largest axis)
-  const maxDim=Math.max(H,W,D);
-  const s=46/maxDim;
-  const w=W*s, h=H*s, d=D*s*0.5;  // depth foreshortened for isometric feel
-  const ox=30, oy=12;             // origin (front-bottom-left) — leaves room for H label
-  // Front face corners
-  const flb=[ox,oy+h], flt=[ox,oy], frt=[ox+w,oy], frb=[ox+w,oy+h];
-  // Back face (shifted up-right by depth)
-  const blt=[flt[0]+d,flt[1]-d], brt=[frt[0]+d,frt[1]-d], brb=[frb[0]+d,frb[1]-d];
-  const pt=a=>a[0].toFixed(1)+','+a[1].toFixed(1);
-  const svgW=ox+w+d+34, svgH=oy+h+18;
-  return '<svg width="'+Math.ceil(svgW)+'" height="'+Math.ceil(svgH)+'" viewBox="0 0 '+Math.ceil(svgW)+' '+Math.ceil(svgH)+'" '+
-    'style="display:block;margin-top:6px" xmlns="http://www.w3.org/2000/svg">'+
-    // top face
-    '<polygon points="'+pt(flt)+' '+pt(frt)+' '+pt(brt)+' '+pt(blt)+'" fill="#cfe9df" stroke="#0a6450" stroke-width="1" stroke-linejoin="round"/>'+
-    // right (depth) face
-    '<polygon points="'+pt(frt)+' '+pt(frb)+' '+pt(brb)+' '+pt(brt)+'" fill="#aedcca" stroke="#0a6450" stroke-width="1" stroke-linejoin="round"/>'+
-    // front face
-    '<polygon points="'+pt(flt)+' '+pt(frt)+' '+pt(frb)+' '+pt(flb)+'" fill="#e8f5f0" stroke="#0a6450" stroke-width="1.2" stroke-linejoin="round"/>'+
-    // Height label (left vertical edge)
-    '<text x="'+(flt[0]-4)+'" y="'+(oy+h/2+3)+'" font-size="8" fill="#064030" text-anchor="end" font-family="monospace">H '+H+'</text>'+
-    // Width label (front bottom edge)
-    '<text x="'+(ox+w/2)+'" y="'+(oy+h+11)+'" font-size="8" fill="#064030" text-anchor="middle" font-family="monospace">W '+W+'</text>'+
-    // Depth label (receding top-right edge)
-    '<text x="'+(brt[0]+2)+'" y="'+(brt[1]+4)+'" font-size="8" fill="#064030" text-anchor="start" font-family="monospace">D '+D+'</text>'+
-    '</svg>';
-}
-
 function bomTable(bom){
   let html='<div class="bomhd">Live market BOM — per component</div><div class="tbl-wrap"><table>'+
     '<thead><tr><th style="min-width:180px">Component</th><th>Specification</th><th>Qty</th><th>Unit ₹</th><th>Total ₹</th><th>Source</th></tr></thead><tbody>';
   bom.lines.forEach(l=>{
-    // For the MS box line, render a small 3D drawing under the spec text (dims = H × W × D)
-    let specCell=l.spec;
-    if(/MS sheet metal box/i.test(l.comp)){
-      const dim=String(l.spec).match(/(\d+)\s*[×x]\s*(\d+)\s*[×x]\s*(\d+)/);
-      if(dim)specCell=l.spec+boxSVG(dim[1]+'×'+dim[2]+'×'+dim[3]);
-    }
-    html+='<tr><td class="nm">'+l.comp+'</td><td class="sp">'+specCell+'</td><td class="mono">'+l.qty+'</td><td class="mono">'+inr(l.unit)+'</td><td class="mono">'+inr(l.total)+'</td><td class="sp">'+l.src+'</td></tr>';
+    html+='<tr><td class="nm">'+l.comp+'</td><td class="sp">'+l.spec+'</td><td class="mono">'+l.qty+'</td><td class="mono">'+inr(l.unit)+'</td><td class="mono">'+inr(l.total)+'</td><td class="sp">'+l.src+'</td></tr>';
   });
   html+='<tr class="tr-cost"><td colspan="4">Subtotal — vendor BOM cost</td><td class="mono">'+inr(bom.cost)+'</td><td></td></tr>';
   html+='<tr class="tr-margin"><td colspan="4">+ 20% vendor margin</td><td class="mono">'+inr(bom.margin)+'</td><td></td></tr>';

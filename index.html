@@ -470,6 +470,7 @@ async function loadSheet(){
     const header=grid[0].map(h=>String(h).trim().toLowerCase());
     let priceCol=header.findIndex(h=>/cost|price|rate|inr|amount|value|₹/.test(h));
     let nameCol=header.findIndex(h=>/item|component|name|description|material|particular|key/.test(h));
+    let srcCol=header.findIndex(h=>/source|src|vendor|supplier|from/.test(h));
     if(nameCol<0)nameCol=0;
     if(priceCol<0){
       let best=-1,bestCount=-1;
@@ -480,9 +481,18 @@ async function loadSheet(){
     for(let i=1;i<grid.length;i++){
       const name=String(grid[i][nameCol]||'').trim();
       const price=parseFloat(String(grid[i][priceCol]||'').replace(/[^0-9.]/g,''));
-      if(name&&!isNaN(price)&&price>0)rows.push({name,nameLow:name.toLowerCase(),price});
+      const rowSrc=srcCol>=0?String(grid[i][srcCol]||'').trim():'';
+      if(name&&!isNaN(price)&&price>0)rows.push({name,nameLow:name.toLowerCase(),price,src:rowSrc});
     }
-    SHEET={rows,loaded:true,error:null,fetchedAt:Date.now(),nameHeader:grid[0][nameCol],priceHeader:grid[0][priceCol],breakers:null,steelScrape:null};
+    // Aluminium busbar rate comes from cell B3 (column B = index 1, row 3 = grid index 2).
+    // We read that cell directly as requested; source = the row's source cell if present, else the row key.
+    let aluB3=null, aluB3Src='';
+    if(grid[2]){
+      const v=parseFloat(String(grid[2][1]||'').replace(/[^0-9.]/g,''));
+      if(!isNaN(v)&&v>0)aluB3=v;
+      aluB3Src=(srcCol>=0?String(grid[2][srcCol]||'').trim():'')||String(grid[2][0]||'').trim();
+    }
+    SHEET={rows,loaded:true,error:null,fetchedAt:Date.now(),nameHeader:grid[0][nameCol],priceHeader:grid[0][priceCol],hasSrcCol:srcCol>=0,aluB3,aluB3Src,breakers:null,steelScrape:null};
 
     // --- Breaker tab (best-effort; don't fail the whole load if it errors) ---
     try{const bgrid=await fetchCSV(SHEET_GID_BREAKERS);SHEET.breakers=parseBreakers(bgrid);}catch(e){SHEET.breakers=null;SHEET.breakerErr=e.message;}
@@ -508,16 +518,27 @@ function sheetPrice(keywords){
   for(const kw of keywords){
     const words=Array.isArray(kw)?kw.map(w=>w.toLowerCase()):[String(kw).toLowerCase()];
     const hit=SHEET.rows.find(r=>words.every(w=>r.nameLow.includes(w)));
-    if(hit)return{price:hit.price,name:hit.name};
+    if(hit)return{price:hit.price,name:hit.name,src:hit.src||''};
   }
   return null;
+}
+// Format a Table-tab price's source line: prefer the sheet's own Source column text;
+// if it names a vendor/IndiaMART, show that; otherwise tag it ProjectBase.
+function tableSrcLabel(rowSrc){
+  const s=String(rowSrc||'').trim();
+  if(!s)return 'ProjectBase';
+  const l=s.toLowerCase();
+  if(l.includes('invoice'))return 'Purchase Invoice from ProjectBase';
+  if(l.includes('order')||/\bpo\b/.test(l))return 'Purchase Order from ProjectBase';
+  if(l.includes('indiamart')||l.includes('india mart'))return s;  // show vendor as-is
+  return s+' (ProjectBase)';
 }
 
 // Resolve the steel ₹/kg the BOM will use, with a clear source caption.
 // Order: Table tab steelPerKg → MS-scrape median → ₹52 reference.
 function resolveSteel(){
   const sp=sheetPrice([['steelperkg'],['steel','kg'],['ms','sheet','kg'],['crca','kg']]);
-  if(sp)return{rate:sp.price,src:'Component & Material Costs gsheet (scraped from IndiaMART) · steel ₹'+sp.price+'/kg'};
+  if(sp)return{rate:sp.price,src:tableSrcLabel(sp.src)+' · steel ₹'+sp.price+'/kg'};
   if(SHEET.steelScrape)return{rate:SHEET.steelScrape,src:'Component & Material Costs gsheet (scraped from IndiaMART) · steel ₹'+SHEET.steelScrape+'/kg'};
   return{rate:52,src:'IndiaMART reference (steel ₹52/kg)'};
 }
@@ -537,9 +558,17 @@ function busbarCost(amps,len){
   const sz=[{n:'25×5',a:160,cs:125},{n:'25×6',a:190,cs:150},{n:'30×5',a:210,cs:150},{n:'40×5',a:280,cs:200},{n:'40×6',a:330,cs:240},{n:'40×10',a:475,cs:400},{n:'50×10',a:590,cs:500},{n:'60×10',a:700,cs:600},{n:'80×10',a:920,cs:800},{n:'100×10',a:1140,cs:1000},{n:'100×12',a:1380,cs:1200},{n:'120×12',a:1650,cs:1440},{n:'150×12',a:2050,cs:1800}];
   const s=sz.find(x=>x.a>=da)||sz[sz.length-1];
   const kg=s.cs*len*2.7/1e6*4;  // density 2.7 g/cm³, ×4 bars (R/Y/B/N)
-  const sp=sheetPrice([['aluminium','busbar'],['aluminum','busbar'],['busbarperkg'],['busbar','kg'],['aluminium','kg']]);
-  const rate=sp?sp.price:260;
-  const srcB=sp?'ProjectBase (aluminium ₹'+sp.price+'/kg)':'IndiaMart (aluminium ₹260/kg)';
+  // Aluminium ₹/kg: prefer cell B3 of the Table tab (as configured), then a keyword-matched
+  // row, then the IndiaMART reference. Source label comes from the sheet's Source column.
+  let rate, srcB;
+  if(SHEET.loaded&&SHEET.aluB3){
+    rate=SHEET.aluB3;
+    srcB='aluminium ₹'+rate+'/kg · '+tableSrcLabel(SHEET.aluB3Src);
+  }else{
+    const sp=sheetPrice([['aluminium','busbar'],['aluminum','busbar'],['busbarperkg'],['busbar','kg'],['aluminium','kg']]);
+    if(sp){rate=sp.price;srcB='aluminium ₹'+rate+'/kg · '+tableSrcLabel(sp.src);}
+    else{rate=260;srcB='aluminium ₹260/kg · IndiaMart';}
+  }
   return{size:s.n,kg,total:Math.round(kg*rate),src:srcB};
 }
 // Format a breaker's source per the rule: if the sheet Source is a Purchase Invoice/Order,

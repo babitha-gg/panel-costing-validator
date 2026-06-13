@@ -517,8 +517,8 @@ function sheetPrice(keywords){
 // Order: Table tab steelPerKg → MS-scrape median → ₹52 reference.
 function resolveSteel(){
   const sp=sheetPrice([['steelperkg'],['steel','kg'],['ms','sheet','kg'],['crca','kg']]);
-  if(sp)return{rate:sp.price,src:'Project base · Google Sheet (steel ₹'+sp.price+'/kg)'};
-  if(SHEET.steelScrape)return{rate:SHEET.steelScrape,src:'IndiaMART scrape · Google Sheet (steel ₹'+SHEET.steelScrape+'/kg)'};
+  if(sp)return{rate:sp.price,src:'Component & Material Costs gsheet (scraped from IndiaMART) · steel ₹'+sp.price+'/kg'};
+  if(SHEET.steelScrape)return{rate:SHEET.steelScrape,src:'Component & Material Costs gsheet (scraped from IndiaMART) · steel ₹'+SHEET.steelScrape+'/kg'};
   return{rate:52,src:'IndiaMART reference (steel ₹52/kg)'};
 }
 
@@ -539,8 +539,17 @@ function busbarCost(amps,len){
   const kg=s.cs*len*2.7/1e6*4;  // density 2.7 g/cm³, ×4 bars (R/Y/B/N)
   const sp=sheetPrice([['aluminium','busbar'],['aluminum','busbar'],['busbarperkg'],['busbar','kg'],['aluminium','kg']]);
   const rate=sp?sp.price:260;
-  const srcB=sp?'Project base (aluminium ₹'+sp.price+'/kg)':'Hindalco · IndiaMART (aluminium ₹260/kg)';
+  const srcB=sp?'ProjectBase (aluminium ₹'+sp.price+'/kg)':'IndiaMart (aluminium ₹260/kg)';
   return{size:s.n,kg,total:Math.round(kg*rate),src:srcB};
+}
+// Format a breaker's source per the rule: if the sheet Source is a Purchase Invoice/Order,
+// show "<Purchase Invoice/Order> from ProjectBase"; otherwise show "IndiaMart".
+function brkSrc(sheetSrc){
+  const s=String(sheetSrc||'').toLowerCase();
+  if(s.includes('invoice'))return 'Purchase Invoice from ProjectBase';
+  if(s.includes('order')||/\bpo\b/.test(s))return 'Purchase Order from ProjectBase';
+  if(/\bpi\b/.test(s))return 'Purchase Invoice from ProjectBase';
+  return 'IndiaMart';
 }
 function breakerCost(amps){
   const std=nextStd(amps);
@@ -549,23 +558,23 @@ function breakerCost(amps){
     // MCB — from the breaker tab (4-pole), else IndiaMART reference
     const sp=breakerFromSheet('MCB',reqA);
     const p={16:550,20:600,25:700,32:900,40:1200,50:1400,63:1600,80:2200};
-    if(sp)return{type:'MCB 4P',size:sp.amps+'A',brand:sp.item,src:'Project base',cost:sp.cost};
-    return{type:'MCB 4P 10kA',size:std+'A',brand:'ABB SH204M / Chint NXB-63',src:'Eleczo · IndiaMART · Flipkart',cost:(p[std]||1600)};
+    if(sp)return{type:'MCB 4P',size:sp.amps+'A',brand:sp.item,src:brkSrc(sp.src),cost:sp.cost};
+    return{type:'MCB 4P 10kA',size:std+'A',brand:'ABB SH204M / Chint NXB-63',src:'IndiaMart',cost:(p[std]||1600)};
   }
   // For ≥800A use ACB; otherwise MCCB
   if(std>=800){
     const sp=breakerFromSheet('ACB',reqA);
-    if(sp)return{type:'ACB 4P',size:sp.amps+'A',brand:sp.item,src:'Project base',cost:sp.cost};
+    if(sp)return{type:'ACB 4P',size:sp.amps+'A',brand:sp.item,src:brkSrc(sp.src),cost:sp.cost};
   }
   const sp=breakerFromSheet('MCCB',reqA);
   const p={100:6400,125:7800,160:11000,200:14000,250:16500,400:23000,630:36000,800:50000,1000:65000,1250:88000,1600:128000,2000:158000};
-  if(sp)return{type:'MCCB 4P',size:sp.amps+'A',brand:sp.item,src:'Project base',cost:sp.cost};
-  return{type:'MCCB 4P 25-30kA',size:std+'A',brand:'L&T DU100H / Schneider EZC',src:'Eleczo · IndiaMART · LK Smartshop',cost:(p[std]||16500)};
+  if(sp)return{type:'MCCB 4P',size:sp.amps+'A',brand:sp.item,src:brkSrc(sp.src),cost:sp.cost};
+  return{type:'MCCB 4P 25-30kA',size:std+'A',brand:'L&T DU100H / Schneider EZC',src:'IndiaMart',cost:(p[std]||16500)};
 }
 function spdCost(a){
   // Try the sheet first (AC 3-phase SPD), else fall back to tiered defaults.
   const sp=sheetPrice([['spd','ds440'],['ac','spd','3'],['spd','3-ph'],['spd','3ph'],['ac','spd'],['spd']]);
-  if(sp)return{model:sp.name,src:'Project base',cost:sp.price};
+  if(sp)return{model:sp.name,src:'ProjectBase',cost:sp.price};
   if(a<=100)return{model:'Citel DS440-320 (3P+N, 20kA)',src:'IndiaMART · Citel India',cost:1800};
   if(a<=250)return{model:'Citel DS440-280 (3P+N, 40kA)',src:'IndiaMART · Citel India',cost:3600};
   if(a<=630)return{model:'Citel DS44-280/G (3P+N, 40kA, pluggable)',src:'IndiaMART · Citel India',cost:6000};
@@ -573,7 +582,7 @@ function spdCost(a){
 }
 function ctCost(a){
   const sp=sheetPrice([['ct','class'],['current','transformer'],['ct','5a']]);
-  if(sp){const ratio=a<=50?'50/5A':a<=100?'100/5A':a<=200?'200/5A':a<=400?'400/5A':a<=600?'600/5A':a<=1000?'1000/5A':'1500/5A';return{ratio,src:'Project base',cost:sp.price};}
+  if(sp){const ratio=a<=50?'50/5A':a<=100?'100/5A':a<=200?'200/5A':a<=400?'400/5A':a<=600?'600/5A':a<=1000?'1000/5A':'1500/5A';return{ratio,src:'ProjectBase',cost:sp.price};}
   if(a<=50)return{ratio:'50/5A',src:'IndiaMART · multiple',cost:250};
   if(a<=100)return{ratio:'100/5A',src:'IndiaMART · multiple',cost:280};
   if(a<=200)return{ratio:'200/5A',src:'IndiaMART · multiple',cost:450};
@@ -585,14 +594,18 @@ function ctCost(a){
 // Helper: glands cost from sheet (any gland line) else default.
 function glandsCost(def){
   const sp=sheetPrice([['gland','terminal'],['gland','metal'],['gland']]);
-  if(sp)return{cost:sp.price,src:'Project base ('+sp.name+')'};
+  if(sp)return{cost:sp.price,src:'ProjectBase ('+sp.name+')'};
   return{cost:def,src:'IndiaMART · local'};
 }
 // Helper: relay / shunt / smart-meter from sheet else default.
-function relayCost(){const sp=sheetPrice([['selec','900vpr'],['voltage','relay'],['protection','relay'],['relay']]);return sp?{cost:sp.price,src:'Project base'}:{cost:1200,src:'IndiaMART · Industrybuying'};}
-function shuntCost(){const sp=sheetPrice([['shunt','trip'],['shunt','release'],['shunt']]);return sp?{cost:sp.price,src:'Project base'}:{cost:950,src:'LK Smartshop · IndiaMART'};}
+function relayCost(){const sp=sheetPrice([['selec','900vpr'],['voltage','relay'],['protection','relay'],['relay']]);return sp?{cost:sp.price,src:'ProjectBase'}:{cost:1200,src:'IndiaMART · Industrybuying'};}
+function shuntCost(){const sp=sheetPrice([['shunt','trip'],['shunt','release'],['shunt']]);return sp?{cost:sp.price,src:'ProjectBase'}:{cost:950,src:'LK Smartshop · IndiaMART'};}
 
 const inr=n=>(n==null||isNaN(n))?'—':'₹'+Math.round(n).toLocaleString('en-IN');
+// Dates always dd/mm/yyyy; times as dd/mm/yyyy HH:MM:SS
+const fmtDate=d=>{d=new Date(d);const p=n=>String(n).padStart(2,'0');return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear();};
+const fmtTime=d=>{d=new Date(d);const p=n=>String(n).padStart(2,'0');return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());};
+const fmtDateTime=d=>fmtDate(d)+' '+fmtTime(d);
 const round2=n=>(n==null||isNaN(n))?n:(Math.round(n*100)/100);
 // Strip floating-point noise (99.89999999999999 → 99.9) while keeping real decimals (300.4 → 300.4).
 const cleanNum=n=>{if(n==null||isNaN(n))return n;const r=Math.round(n*1000)/1000;return parseFloat(r.toFixed(3)).toString();};
@@ -763,30 +776,119 @@ function getInputs(wb){
   //   Block-1 value at column C = index 2 ; Block-3 at G = 6 ; Block-5 at K = 10 ; Block-7 at O = 14
   //   Block-2 value at column C = index 2 (row 10+) ; Block-4 at G ; Block-6 at K ; Block-8 at O
   //   Rows: R3-R7 = blocks 1,3,5,7 (row idx 2 in JS) ; R10-R14 = blocks 2,4,6,8 (row idx 9)
-  const mb=getRows(wb,'ACDB for Multiple Blocks');
-  if(mb.length>0){
-    const blockMap=[
-      {name:'Block-1',row:2,col:2},{name:'Block-3',row:2,col:6},{name:'Block-5',row:2,col:10},{name:'Block-7',row:2,col:14},
-      {name:'Block-2',row:9,col:2},{name:'Block-4',row:9,col:6},{name:'Block-6',row:9,col:10},{name:'Block-8',row:9,col:14}
-    ];
-    for(const b of blockMap){
-      if(!mb[b.row])continue;
-      const invCount=parseFloat(mb[b.row][b.col])||0;  // R3/R10 = inverter count
-      const invCap=parseFloat((mb[b.row+1]||[])[b.col])||0;  // R4/R11 = total capacity kVA
-      const maxAC=parseFloat((mb[b.row+2]||[])[b.col])||0;  // R5/R12 = max AC current
-      const invCost=parseFloat((mb[b.row+3]||[])[b.col])||0;  // R6/R13 = inverter cost
-      const acdbCost=parseFloat((mb[b.row+4]||[])[b.col]);  // R7/R14 = ACDB cost (may be 'Invalid Inverter Cost')
-      if(invCount>0||invCap>0){
-        out.blockData.push({name:b.name,invCount,invCap,maxAC,invCost,acdbCost:isNaN(acdbCost)?null:acdbCost});
+  // ── Max AC current per block = SUM of the "Total Current" column across the block's
+  //    SELECTED inverter rows (rows that have a Quantity or Cost filled in). ───────────
+  //    We read the sheet's own "Total Current" value directly (it already includes the
+  //    sheet's diversity/safety factor — e.g. a selected row can read 434 even where
+  //    qty×baseCurrent would be 288), and SUM it across all selected rows in the block
+  //    (handles mixed-model blocks like 33.3kVA + 17kVA). Layout-independent.
+  const selCurrentByBlock={};
+  try{
+    const isel=getRows(wb,'Inverter Selection');
+    if(isel.length){
+      // Detect, from ANY header-ish row, the column index of "Total Current", "Quantity",
+      // and "Cost" within each repeating block group. Headers repeat per group, so we collect
+      // all of them and, for any data cell, use the nearest header column of that type to its left.
+      const tcCols=[],qtyCols=[],costCols=[],capCols=[];
+      for(let r=0;r<isel.length;r++){
+        const row=isel[r]||[];
+        for(let c=0;c<row.length;c++){
+          const h=nl(row[c]).replace(/\s+/g,' ').trim();
+          if(h.includes('total current'))tcCols.push(c);
+          else if(h==='quantity'||h==='qty')qtyCols.push(c);
+          else if(h==='cost')costCols.push(c);
+          else if(h.includes('inverter capacity')||h==='id')capCols.push(c);
+        }
+      }
+      const nearestLeft=(cols,c)=>{let best=-1;for(const x of cols)if(x<=c&&x>best)best=x;return best;};
+      // Find every block label, with its row + column.
+      const labels=[];
+      for(let r=0;r<isel.length;r++){
+        const row=isel[r]||[];
+        for(let c=0;c<row.length;c++){
+          const m=String(row[c]||'').match(/\bblock\s*[-#]?\s*(\d+)\b/i);
+          if(m)labels.push({name:'Block-'+m[1],row:r,col:c});
+        }
+      }
+      if(tcCols.length&&labels.length){
+        labels.forEach(lab=>{
+          let endRow=Math.min(isel.length,lab.row+14);
+          for(const o of labels)if(o.col===lab.col&&o.row>lab.row)endRow=Math.min(endRow,o.row);
+          const myTc=tcCols.filter(c=>c>=lab.col&&c<=lab.col+11);
+          // SUM Total Current over the block's REAL inverter rows only (a row with a non-empty
+          // inverter Capacity/ID is a genuine model; rows with blank capacity are summary/total
+          // rows that repeat the value and must be skipped to avoid double-counting). Mixed-model
+          // blocks (e.g. 33.3 + 17 kVA) correctly add across their distinct model rows.
+          let groupSum=0;
+          for(let r=lab.row;r<endRow;r++){
+            const row=isel[r]||[];
+            for(const c of myTc){
+              const tcVal=parseFloat(String(row[c]).replace(/[^0-9.\-]/g,''));
+              if(isNaN(tcVal)||tcVal<=0)continue;
+              const qc=nearestLeft(qtyCols,c), cc=nearestLeft(costCols,c), pc=nearestLeft(capCols,c);
+              const qv=qc>=0?parseFloat(String(row[qc]).replace(/[^0-9.\-]/g,'')):NaN;
+              const cv=cc>=0?parseFloat(String(row[cc]).replace(/[^0-9.\-]/g,'')):NaN;
+              // require a REAL inverter model on this row: capacity/ID cell non-empty
+              const capCell=pc>=0?String(row[pc]||'').trim():'';
+              const isModelRow=capCell!=='';
+              const selected=((!isNaN(qv)&&qv>0)||(!isNaN(cv)&&cv>0))&&isModelRow;
+              if(selected)groupSum+=tcVal;
+            }
+          }
+          if(groupSum>0)selCurrentByBlock[lab.name]=Math.max(selCurrentByBlock[lab.name]||0,groupSum);
+        });
       }
     }
-    // Totals area: R16 onwards
-    for(let ri=15;ri<Math.min(mb.length,22);ri++){
+  }catch(e){}
+
+  const mb=getRows(wb,'ACDB for Multiple Blocks');
+  if(mb.length>0){
+    // Robust scan: find every cell that starts an "ACDB Inputs: Block N" block, then read the
+    // labelled rows directly beneath it IN THE SAME COLUMN. The value sits one column to the right
+    // of each label. This works regardless of how many blocks or which columns/rows they occupy.
+    const valAt=(r,c)=>{const row=mb[r]||[];const v=parseFloat(String(row[c]).replace(/[^0-9.\-]/g,''));return isNaN(v)?0:v;};
+    const seen={};
+    for(let r=0;r<mb.length;r++){
+      const row=mb[r]||[];
+      for(let c=0;c<row.length;c++){
+        const cell=nl(row[c]);
+        if(!cell.includes('acdb inputs')||!cell.includes('block'))continue;
+        // derive block name/number
+        const nameMatch=String(row[c]).match(/block\s*[-#]?\s*(\d+)/i);
+        const name=nameMatch?('Block-'+nameMatch[1]):('Block@r'+r+'c'+c);
+        // Read the labelled rows in the rows beneath, same column 'c' (label) → value at c+1
+        let invCount=0,invCap=0,maxAC=0,invCost=0,acdbCost=NaN,gotAny=false;
+        for(let rr=r+1;rr<Math.min(mb.length,r+7);rr++){
+          const lbl=nl((mb[rr]||[])[c]);
+          if(!lbl)continue;
+          if(lbl.includes('acdb inputs'))break;             // next block started
+          if(lbl.includes('total number')||lbl.includes('total current')||lbl.includes('total acdb'))break; // hit the totals block
+          const v=valAt(rr,c+1);
+          if(lbl.includes('number of inverter')){invCount=v;gotAny=true;}
+          else if(lbl.includes('total inverter cap')){invCap=v;gotAny=true;}
+          else if(lbl.includes('max ac current')){maxAC=v;gotAny=true;}
+          else if(lbl.includes('inverter cost'))invCost=v;
+          else if(lbl.includes('acdb cost')){const raw=parseFloat(String((mb[rr]||[])[c+1]).replace(/[^0-9.\-]/g,''));acdbCost=isNaN(raw)?NaN:raw;}
+        }
+        if(gotAny&&(invCount>0||invCap>0)&&!seen[name]){
+          seen[name]=true;
+          // Authoritative ACDB current: Inverter Selection "Total Current" sum if available,
+          // else the Multiple-Blocks "Max AC current" cell, else 0 (calc fallback downstream).
+          const selI=selCurrentByBlock[name]||0;
+          out.blockData.push({name,invCount,invCap,maxAC:(selI>0?selI:maxAC),selCurrent:selI,invCost,acdbCost:isNaN(acdbCost)?null:acdbCost});
+        }
+      }
+    }
+    // Totals area: scan for the summary labels anywhere in the tab
+    for(let ri=0;ri<mb.length;ri++){
       const row=mb[ri];if(!row)continue;
-      const lbl=nl(row[1]);
-      if(lbl.includes('total number of inverters'))out.totalInverters=parseFloat(row[2])||0;
-      if(lbl.includes('total current'))out.totalCurrent=parseFloat(row[2])||0;
-      if(lbl.includes('total acdb cost'))out.totalACDBCost=parseFloat(row[2])||null;
+      for(let c=0;c<row.length;c++){
+        const lbl=nl(row[c]);if(!lbl)continue;
+        const v=parseFloat(String(row[c+1]).replace(/[^0-9.\-]/g,''));
+        if(lbl.includes('total number of inverters')&&!isNaN(v))out.totalInverters=v;
+        if(lbl.includes('total current')&&!isNaN(v))out.totalCurrent=v;
+        if(lbl.includes('total acdb cost')&&!isNaN(v))out.totalACDBCost=v;
+      }
     }
     if(out.blockData.length>=2)out.blocks=out.blockData.length;
   }
@@ -943,7 +1045,6 @@ function buildACDB_BOM_byAmps(I_acdb,numInputs){
   // current (≈ total / numInputs), with an outgoing breaker sized for the combined current.
   const perInputAmps=I_acdb/numInputs;
   const inBrk=breakerCost(perInputAmps);
-  const outBrk=breakerCost(I_acdb);
   const spd=spdCost(I_acdb);
   const bus=busbarCost(I_acdb);
   const labHr=numInputs<=1?7:(7+numInputs*2);  // more inputs = more wiring/test time
@@ -951,9 +1052,8 @@ function buildACDB_BOM_byAmps(I_acdb,numInputs){
     {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · '+tableIns+' in 1 out',qty:1,unit:box.total,total:box.total,src:box.src},
     {comp:'Incomer '+inBrk.type+' (per input)',spec:inBrk.size+' · '+inBrk.brand,qty:numInputs,unit:inBrk.cost,total:inBrk.cost*numInputs,src:inBrk.src}
   ];
-  if(numInputs>1){
-    lines.push({comp:'Outgoing '+outBrk.type,spec:outBrk.size+' · '+outBrk.brand+' · combined '+Math.round(I_acdb)+'A',qty:1,unit:outBrk.cost,total:outBrk.cost,src:outBrk.src});
-  }
+  // (No outgoing MCCB/MCB here — the Solar LT panel already carries the outgoing breaker;
+  //  adding one in each ACDB double-counts and inflates cost.)
   lines.push(
     {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
     {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · 4 bars × 1m · '+bus.kg.toFixed(2)+' kg',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
@@ -1009,12 +1109,10 @@ function buildCombiner_BOM(I_comb,ins){
   const sizes={2:{box:'1000×1400×400',hr:8},3:{box:'1300×1450×400',hr:10},4:{box:'1200×1500×400',hr:11},5:{box:'1500×1500×500',hr:13},6:{box:'1800×1800×1000',hr:18},7:{box:'2100×1800×1000',hr:20},8:{box:'2100×2000×1000',hr:22},9:{box:'2400×2000×1000',hr:24},10:{box:'2400×2200×1000',hr:26}};
   const sz=sizes[ins]||sizes[10];
   const box=msBoxCost(sz.box);
-  const brk=breakerCost(I_comb);
   const bus=busbarCost(I_comb,1200);
   const lines=[
     {comp:'MS sheet metal box',spec:sz.box+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · 2mm CRCA · IP54',qty:1,unit:box.total,total:box.total,src:box.src},
     {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · sized 1.25× '+Math.round(I_comb)+'A',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
-    {comp:'Outgoing '+brk.type,spec:brk.size+' · '+brk.brand+' · for combined '+Math.round(I_comb)+'A',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
     (function(){const base=ins*400+400;const g=glandsCost(base);return{comp:'Glands + terminals',spec:ins+' incoming + 1 outgoing cable entries',qty:1,unit:g.cost,total:g.cost,src:g.src}})(),
     {comp:'Labour (fab + wiring + test)',spec:sz.hr+' hr @ ₹500/hr',qty:sz.hr,unit:500,total:sz.hr*500,src:'Local fabricator (₹500/hr)'}
   ];
@@ -1033,7 +1131,7 @@ function buildMainMeter_BOM(SL,supply){
   const labHr=supply==='HT'?20:14;
   const lines=[
     {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · houses busbars + 4 CTs (meters by DISCOM)',qty:1,unit:box.total,total:box.total,src:box.src},
-    {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · sized 1.25× I_load ('+Math.round(I_load)+'A)',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
+    {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · sized 1.25× current ('+Math.round(I_load)+'A)',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
     {comp:'CTs (shared Main BDM + Check)',spec:ct.ratio+' Class 0.5/0.5S · sized to sanctioned load',qty:4,unit:ct.cost,total:ct.cost*4,src:ct.src},
     {comp:'Glands + terminals + lugs',spec:'CT secondary wiring + DISCOM termination',qty:1,unit:1500,total:1500,src:'IndiaMART · local'},
     {comp:'Labour (fab + wiring + test)',spec:labHr+' hr @ ₹500/hr',qty:labHr,unit:500,total:labHr*500,src:'Local fabricator (₹500/hr)'}
@@ -1148,7 +1246,7 @@ function renderACDBPerBlock(inv,panel,supply,inputs){
       '<div class="sec-hd"><div class="sec-title"><div class="sec-ico ic-g">A</div>ACDB-'+(idx+1)+' Panel · '+g.numInputs+'×inv · '+I_acdb+'A</div>'+mkB(pct(sheetGroup,marketGroup))+'</div>'+
       '<div class="pinfo">'+
         '<div><div class="pi-lbl">Config</div><div class="pi-val">'+cfg+'</div></div>'+
-        '<div><div class="pi-lbl">Max AC current</div><div class="pi-val">'+I_acdb+'A</div></div>'+
+        '<div><div class="pi-lbl">Max AC current (per block, from Inverter Selection)</div><div class="pi-val">'+I_acdb+'A</div></div>'+
         '<div><div class="pi-lbl">Enclosures · Inverters</div><div class="pi-val">'+g.count+' box'+(g.count>1?'es':'')+' · '+g.invCount+' inv</div></div>'+
         '<div style="grid-column:1/-1"><div class="pi-lbl">For inverters</div><div class="pi-val" style="font-size:13px">'+(invModels||'—')+'</div></div>'+
       '</div>'+
@@ -1411,15 +1509,13 @@ function renderInverterCard(inv,proj,inputs){
     '<div class="pinfo">'+
       '<div><div class="pi-lbl">Capacity (from Inverter Selection sheet)</div><div class="pi-val" style="font-size:16px">'+exactKva+' kVA</div></div>'+
       '<div><div class="pi-lbl">Total inverters</div><div class="pi-val">'+totalUnits+' no.s</div></div>'+
-      '<div><div class="pi-lbl">Strings</div><div class="pi-val">'+(inv&&inv.strings?inv.strings:'—')+'</div></div>'+
-      '<div><div class="pi-lbl">Project DC size</div><div class="pi-val">'+(inputs&&inputs.projectSizeKwp?cleanNum(inputs.projectSizeKwp)+' kWp':'—')+'</div></div>'+
     '</div>'+
     '<div class="tbl-wrap"><table>'+
       '<thead><tr><th style="min-width:200px">Inverter model</th><th>Unit kVA</th><th>Qty</th><th>Subtotal kVA</th></tr></thead>'+
       '<tbody>'+rows+
       '<tr class="tr-total"><td>Total — '+totalUnits+' inverter'+(totalUnits!==1?'s':'')+'</td><td></td><td class="mono">'+totalUnits+'</td><td class="mono" style="font-size:14px">'+exactKva+' kVA</td></tr>'+
       '</tbody></table></div>'+
-    '<div class="'+(weakWarn?'warn-box':'info-box')+'">'+srcNote+stringsNote+'</div>'+
+    (weakWarn?'<div class="warn-box">⚠ Could not find a populated selection — fell back to the first listed model. VERIFY this is correct; the sheet may not have the inverter quantity/cost filled in.</div>':'')+
   '</div>';
 }
 
@@ -1438,7 +1534,7 @@ function renderBanner(proj,inv,inputs,supply,panels){
     '<div class="bn-item"><div class="bn-l">Capacity</div><div class="bn-v">'+capDisplay+'</div></div>'+
     '<div class="bn-item"><div class="bn-l">Sanctioned Load</div><div class="bn-v">'+(inputs.sanctionedLoad?inputs.sanctionedLoad+' kW':'—')+'</div></div>'+
     '<div class="bn-item"><div class="bn-l">Supply · PF</div><div class="bn-v">'+supply+' · '+pfFor(supply)+'</div></div>'+
-    '<div class="bn-item"><div class="bn-l">I_load</div><div class="bn-v">'+(I_load?I_load+'A':'—')+'</div></div>'+
+    '<div class="bn-item"><div class="bn-l">Current based on Sanctioned Load</div><div class="bn-v">'+(I_load?I_load+'A':'—')+'</div></div>'+
     '<div class="bn-item"><div class="bn-l">Panels in quote</div><div class="bn-v">'+(present.join(' · ')||'None')+'</div></div>';
 }
 
@@ -1553,12 +1649,12 @@ function processWorkbook(file){
           sheetBadge='<div style="font-size:11px;margin-bottom:10px;padding:10px 12px;background:#e8f5f0;border-radius:7px;color:#0a6450">'+
             '🟢 <strong>Reading your Google Sheet</strong> · Table: '+SHEET.rows.length+' items · '+bTxt+
             '<br><span style="color:#3a7a68">Steel used: <strong>₹'+st.rate+'/kg</strong> — '+st.src+'</span>'+
-            '<br><span style="color:#3a7a68">read '+new Date(SHEET.fetchedAt).toLocaleTimeString()+'</span>'+
+            '<br><span style="color:#3a7a68">read '+fmtTime(SHEET.fetchedAt)+'</span>'+
           '</div>';
         }else{
           const fileWarn=(location.protocol==='file:')?'<br><span style="color:#b07a20"><strong>Likely cause:</strong> you opened this file directly (file://). Browsers block reading Google from a file:// page. Host it (GitHub Pages) or serve over http, and it will work.</span>':'';
           sheetBadge='<div style="font-size:11px;margin-bottom:10px;padding:10px 12px;background:#fff3e0;border-radius:7px;color:#9a6a00">'+
-            '🟡 <strong>Could NOT read your Google Sheet</strong> — '+(SHEET.error||'unknown')+'. All prices below are IndiaMART reference, not Project base.'+
+            '🟡 <strong>Could NOT read your Google Sheet</strong> — '+(SHEET.error||'unknown')+'. All prices below are IndiaMART reference, not ProjectBase.'+
             fileWarn+
             '<br><span style="color:#b07a20">Also check: sheet → Share → "Anyone with the link → Viewer".</span>'+
           '</div>';
@@ -1566,7 +1662,7 @@ function processWorkbook(file){
       }
       const stamp='<div style="font-size:11px;color:var(--t3);margin-bottom:10px;padding:8px 12px;background:#f0ede8;border-radius:7px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px">'+
         '<span>📄 <strong>'+file.name+'</strong></span>'+
-        '<span>Processed '+now.toLocaleTimeString()+' · '+now.toLocaleDateString()+'</span>'+
+        '<span>Processed '+fmtDateTime(now)+'</span>'+
       '</div>'+sheetBadge;
       document.getElementById('overall').innerHTML=stamp+renderOverall(panels,results);
       document.getElementById('main').innerHTML=renderInverterCard(inv,proj,inputs)+html;

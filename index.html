@@ -721,7 +721,7 @@ function shuntCost(amps){
     const hit=SHEET.shunt.find(r=>amps>=r.min&&amps<=r.max)
             ||SHEET.shunt.find(r=>r.min>amps)            // next band up (gap → round up)
             ||SHEET.shunt[SHEET.shunt.length-1];          // above all → largest band
-    if(hit){const yr=(SHEET.shuntCostHeader||'').replace(/cost in/i,'').trim();return{cost:hit.cost,src:'ProjectBase'+(yr?' (Cost in '+yr+')':'')};}
+    if(hit){const yr=(SHEET.shuntCostHeader||'').replace(/cost in/i,'').trim();return{cost:hit.cost,src:'Market price in '+(yr||new Date().getFullYear())};}
   }
   const sp=sheetPrice([['shunt','trip'],['shunt','release'],['shunt']]);
   return sp?{cost:sp.price,src:tableSrcLabel(sp.src)}:{cost:950,src:'LK Smartshop · IndiaMART'};

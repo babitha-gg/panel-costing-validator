@@ -386,6 +386,7 @@ const SHEET_CSV_URL = csvUrl(0);              // primary key/value tab
 const SHEET_GID_STEEL = 818196891;            // MS metal sheet scrape
 const SHEET_GID_BREAKERS = 752404217;         // MCB/MCCB/ACB/VCB
 const SHEET_SPD_TABNAME = "AC SPD";           // AC SPD tab — fetched by name (no gid needed)
+const SHEET_SHUNT_TABNAME = "Shunt trip coil"; // Shunt trip coil tab — cost by current rating, col G "Cost in <Year>"
 
 let SHEET = { rows: [], loaded: false, error: null, fetchedAt: null, breakers: null, steelScrape: null };
 
@@ -545,6 +546,39 @@ async function loadSheet(){
       }catch(e){SHEET.spd=null;SHEET.spdErr=e.message;}
     }
 
+    // --- Shunt trip coil tab. Columns: Breaker Type | Frame Size | Premium Brand Price Range |
+    //     Base Price | Min Current Rating | Max Current Rating | Cost in <Year> (col G). We read
+    //     the rows with a min/max current band and the year-escalated cost from the "Cost in
+    //     <year>" column (prefer that over Base Price). Lookup is by the outgoing MCCB current. ---
+    if(SHEET_SHUNT_TABNAME){
+      try{
+        const shgrid=await fetchCSVByName(SHEET_SHUNT_TABNAME);
+        // locate columns by header text
+        let minC=-1,maxC=-1,costC=-1,baseC=-1,typeC=-1;
+        const hd=(shgrid[0]||[]).map(h=>nl(h).replace(/\s+/g,' ').trim());
+        hd.forEach((h,c)=>{
+          if(h.includes('min current'))minC=c;
+          else if(h.includes('max current'))maxC=c;
+          else if(h.startsWith('cost in'))costC=c;     // "Cost in 2026"
+          else if(h.includes('base price'))baseC=c;
+          else if(h.includes('breaker type')||h==='type')typeC=c;
+        });
+        const list=[];
+        for(let i=1;i<shgrid.length;i++){
+          const row=shgrid[i];if(!row)continue;
+          const mn=parseFloat(String(row[minC]).replace(/[^0-9.]/g,''));
+          const mx=parseFloat(String(row[maxC]).replace(/[^0-9.]/g,''));
+          let cost=costC>=0?parseFloat(String(row[costC]).replace(/[^0-9.]/g,'')):NaN;
+          if(isNaN(cost)&&baseC>=0)cost=parseFloat(String(row[baseC]).replace(/[^0-9.]/g,''));
+          if(isNaN(mn)||isNaN(mx)||isNaN(cost)||cost<=0)continue;
+          list.push({min:mn,max:mx,cost,type:typeC>=0?String(row[typeC]||'').trim():''});
+        }
+        list.sort((a,b)=>a.min-b.min);
+        SHEET.shunt=list.length?list:null;
+        SHEET.shuntCostHeader=costC>=0?String(shgrid[0][costC]||'').trim():'';
+      }catch(e){SHEET.shunt=null;SHEET.shuntErr=e.message;}
+    }
+
     // --- Steel scrape tab → average, used only if Table has no steel ---
     try{
       const sgrid=await fetchCSV(SHEET_GID_STEEL);
@@ -678,7 +712,20 @@ function glandsCost(def){
 }
 // Helper: relay / shunt / smart-meter from sheet else default.
 function relayCost(){const sp=sheetPrice([['selec','900vpr'],['voltage','relay'],['protection','relay'],['relay']]);return sp?{cost:sp.price,src:'ProjectBase'}:{cost:1200,src:'IndiaMART · Industrybuying'};}
-function shuntCost(){const sp=sheetPrice([['shunt','trip'],['shunt','release'],['shunt']]);return sp?{cost:sp.price,src:'ProjectBase'}:{cost:950,src:'LK Smartshop · IndiaMART'};}
+function shuntCost(amps){
+  // From the "Shunt trip coil" tab: pick the row whose Min–Max current band covers `amps`,
+  // and use its "Cost in <Year>" (col G). Falls back to keyword/Table then IndiaMART reference.
+  if(SHEET.loaded&&SHEET.shunt&&amps>0){
+    // pick the band that covers `amps`; if it falls in a GAP between bands, round UP to the
+    // next higher band (a 159A load needs a 160A-frame breaker, so it carries that band's cost).
+    const hit=SHEET.shunt.find(r=>amps>=r.min&&amps<=r.max)
+            ||SHEET.shunt.find(r=>r.min>amps)            // next band up (gap → round up)
+            ||SHEET.shunt[SHEET.shunt.length-1];          // above all → largest band
+    if(hit){const yr=(SHEET.shuntCostHeader||'').replace(/cost in/i,'').trim();return{cost:hit.cost,src:'ProjectBase'+(yr?' (Cost in '+yr+')':'')};}
+  }
+  const sp=sheetPrice([['shunt','trip'],['shunt','release'],['shunt']]);
+  return sp?{cost:sp.price,src:tableSrcLabel(sp.src)}:{cost:950,src:'LK Smartshop · IndiaMART'};
+}
 
 const inr=n=>(n==null||isNaN(n))?'—':'₹'+Math.round(n).toLocaleString('en-IN');
 // Dates always dd/mm/yyyy; times as dd/mm/yyyy HH:MM:SS
@@ -1172,7 +1219,7 @@ function buildSolarLT_BOM(kw,supply,I_solar,smart){
     {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · houses busbars + meter + relay + SPD + MCCB',qty:1,unit:box.total,total:box.total,src:box.src},
     {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · 4 bars × 1.2m · '+bus.kg.toFixed(2)+' kg',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
     {comp:'Smart Solar Generation Meter',spec:(smart?'Smart':'Normal')+' net-meter · CT-operated (incl. metering CTs)',qty:1,unit:meterPrice,total:meterPrice,src:'Smart Generation Meter Cost from Quote sheet'},
-    (function(){const s=shuntCost();return{comp:'Shunt trip coil (for outgoing MCCB)',spec:'MX shunt release · 230V AC',qty:1,unit:s.cost,total:s.cost,src:s.src}})(),
+    (function(){const s=shuntCost(I_solar);return{comp:'Shunt trip coil (for outgoing MCCB)',spec:'MX shunt release · 230V AC',qty:1,unit:s.cost,total:s.cost,src:s.src}})(),
     (function(){const r=relayCost();return{comp:'Protection relay',spec:'Selec 900VPR-2-280/520V · 3Ø voltage protection',qty:1,unit:r.cost,total:r.cost,src:r.src}})(),
     {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
     {comp:'Outgoing '+brk.type+' (with shunt)',spec:brk.size+' · '+brk.brand+' · shunt-trip equipped',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},

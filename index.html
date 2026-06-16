@@ -578,8 +578,7 @@ function tableSrcLabel(rowSrc){
   const l=s.toLowerCase();
   if(l.includes('invoice'))return 'Purchase Invoice from ProjectBase';
   if(l.includes('order')||/\bpo\b/.test(l))return 'Purchase Order from ProjectBase';
-  if(l.includes('indiamart')||l.includes('india mart'))return s;  // show vendor as-is
-  return s+' (ProjectBase)';
+  return s;  // any other named source (metals.dev, IndiaMART, vendor, etc.) shown as-is
 }
 
 // Resolve the steel ₹/kg the BOM will use, with a clear source caption.
@@ -1172,7 +1171,7 @@ function buildSolarLT_BOM(kw,supply,I_solar,smart){
   const lines=[
     {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · houses busbars + meter + relay + SPD + MCCB',qty:1,unit:box.total,total:box.total,src:box.src},
     {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · 4 bars × 1.2m · '+bus.kg.toFixed(2)+' kg',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
-    {comp:'Smart Solar Generation Meter',spec:(smart?'Smart':'Normal')+' net-meter · CT-operated (incl. metering CTs)',qty:1,unit:meterPrice,total:meterPrice,src:'Sheet Smart Generation Meter tab'},
+    {comp:'Smart Solar Generation Meter',spec:(smart?'Smart':'Normal')+' net-meter · CT-operated (incl. metering CTs)',qty:1,unit:meterPrice,total:meterPrice,src:'Smart Generation Meter Cost from Quote sheet'},
     (function(){const s=shuntCost();return{comp:'Shunt trip coil (for outgoing MCCB)',spec:'MX shunt release · 230V AC',qty:1,unit:s.cost,total:s.cost,src:s.src}})(),
     (function(){const r=relayCost();return{comp:'Protection relay',spec:'Selec 900VPR-2-280/520V · 3Ø voltage protection',qty:1,unit:r.cost,total:r.cost,src:r.src}})(),
     {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},

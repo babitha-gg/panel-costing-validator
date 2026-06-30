@@ -212,7 +212,7 @@ const SOLAR_LT_TABLE = [
 // Market Fair = Σ(component costs) × 1.20 (20% vendor margin)
 const MAIN_METER_SCENARIOS={
   HT:{label:'HT (11/33 kV)',scenarios:[
-    {id:1,sheet:280000,name:'HT cubicle full replacement (2CT2PT — no civil work)',dim:'1800×1800×800 mm · new HT cubicle',bom:[
+    {id:1,sheet:290000,name:'2CT2PT - No Civil work needed',dim:'HT cubicle full replacement, no civil',bom:[
       {comp:'HT MS metal box (3mm CRCA, heavy gauge)',total:65000},
       {comp:'HT 11/33 kV bushings × 3',total:24000},
       {comp:'HT CTs Cl 0.5/0.5S × 5 (oil-cooled)',total:32500},
@@ -221,7 +221,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'HT cable termination kit (Raychem/3M)',total:18000},
       {comp:'Glands, lugs, terminals (HT-grade)',total:8000},
       {comp:'Labour (HT-licensed) 32hr @ ₹900/hr',total:28800}]},
-    {id:2,sheet:350000,name:'HT cubicle full replacement (2CT2PT — civil work needed)',dim:'1800×1800×800 mm + civil work',bom:[
+    {id:2,sheet:360000,name:'2CT2PT - Civil work required',dim:'HT cubicle full replacement + civil work',bom:[
       {comp:'HT MS metal box (3mm CRCA, heavy gauge)',total:65000},
       {comp:'HT 11/33 kV bushings × 3',total:24000},
       {comp:'HT CTs Cl 0.5/0.5S × 5',total:32500},
@@ -231,7 +231,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Glands, lugs, terminals (HT-grade)',total:8000},
       {comp:'Labour (HT) 32hr @ ₹900/hr',total:28800},
       {comp:'Civil work — foundation, trenching, cable laying',total:55000}]},
-    {id:3,sheet:65000,name:'3CT3PT cubicle with space for 2 meters, no TTB',dim:'existing cubicle + TTB add',bom:[
+    {id:3,sheet:65000,name:'3CT3PT with space for Check Meter but no TTB',dim:'existing cubicle + TTB add',bom:[
       {comp:'TTB (Test Terminal Block) — HT-grade',total:12000},
       {comp:'HT cable interface kit',total:8000},
       {comp:'Meter mounting plate + brackets',total:5000},
@@ -239,7 +239,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Sealing kits + tamper-proof seals',total:5000},
       {comp:'Glands, lugs, ferrules',total:4000},
       {comp:'Labour (HT-licensed) 14hr @ ₹900/hr',total:12600}]},
-    {id:4,sheet:90000,name:'3CT3PT cubicle — no space, modification needed',dim:'modify existing HT cubicle',bom:[
+    {id:4,sheet:90000,name:'3CT3PT with no space for both Check Meter and TTB',dim:'modify existing HT cubicle',bom:[
       {comp:'TTB (Test Terminal Block) — HT-grade',total:12000},
       {comp:'HT cable interface kit',total:8000},
       {comp:'Cubicle modification (welding, drilling, paint)',total:18000},
@@ -248,7 +248,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Sealing kits + tamper-proof seals',total:5000},
       {comp:'Glands, lugs, ferrules',total:4000},
       {comp:'Labour (HT) 22hr @ ₹900/hr',total:19800}]},
-    {id:5,sheet:57000,name:'Solar Ready HT meter cubicle',dim:'pre-existing solar provision',bom:[
+    {id:5,sheet:57000,name:'Solar Ready HT meter cubical',dim:'pre-existing solar provision',bom:[
       {comp:'TTB (HT-grade)',total:10000},
       {comp:'Meter mounting + wiring',total:6000},
       {comp:'CT secondary wiring (HT-grade)',total:5000},
@@ -257,8 +257,8 @@ const MAIN_METER_SCENARIOS={
       {comp:'Labour (HT) 14hr @ ₹900/hr',total:12600},
       {comp:'Commissioning + DISCOM testing',total:5000}]},
   ]},
-  LT3CT:{label:'LT 3CT3PT (50-150 kW)',scenarios:[
-    {id:1,sheet:150000,name:'New LT 50-150 kW meter cubicle (CT type)',dim:'1200×1500×600 mm · new cubicle',bom:[
+  LT3CT:{label:'LT with 3CT3PT (50.001 - 150)',scenarios:[
+    {id:1,sheet:170000,name:'New LT 50-150 Meter cubicle (Old LT CT Meter Cubicle)',dim:'new cubicle + 2 BDM + modem',bom:[
       {comp:'LT MS metal box (2mm CRCA, DISCOM-spec)',total:30000},
       {comp:'Al busbar 50×10 mm · 4 bars × 1.2m (200-300A)',total:10000},
       {comp:'LT CTs 200/5A Cl 0.5/0.5S × 4 (DISCOM-spec)',total:20000},
@@ -267,7 +267,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Glands, lugs, terminals (DISCOM-spec)',total:6000},
       {comp:'Sealing kits + tamper-proof seals',total:5000},
       {comp:'Labour 24hr @ ₹500/hr',total:12000}]},
-    {id:2,sheet:65000,name:'3CT3PT cubicle with space, no TTB',dim:'existing cubicle + TTB add',bom:[
+    {id:2,sheet:65000,name:'3CT3PT with space for Check Meter but no TTB',dim:'existing cubicle + TTB add',bom:[
       {comp:'TTB (Test Terminal Block) DISCOM-grade',total:8000},
       {comp:'Cubicle modification (drilling, panel beating)',total:8000},
       {comp:'Meter mounting plate (DISCOM-spec)',total:5000},
@@ -276,7 +276,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Glands, lugs, ferrules',total:4000},
       {comp:'Labour 18hr @ ₹500/hr',total:9000},
       {comp:'Commissioning + DISCOM coordination',total:3000}]},
-    {id:3,sheet:90000,name:'3CT3PT cubicle — modification needed',dim:'major modification',bom:[
+    {id:3,sheet:90000,name:'3CT3PT with no space for both Check Meter and TTB',dim:'major modification',bom:[
       {comp:'TTB (Test Terminal Block) DISCOM-grade',total:8000},
       {comp:'Cubicle major modification (welding, painting, partition)',total:22000},
       {comp:'Meter mounting plate + 2 BDM provision',total:6000},
@@ -285,7 +285,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Glands, lugs, ferrules',total:4000},
       {comp:'Labour 28hr @ ₹500/hr',total:14000},
       {comp:'Commissioning + DISCOM coordination',total:4000}]},
-    {id:4,sheet:57000,name:'Solar Ready LT CT meter cubicle',dim:'pre-existing solar provision',bom:[
+    {id:4,sheet:57000,name:'Solar Ready LT CT meter cubical',dim:'pre-existing solar provision',bom:[
       {comp:'TTB DISCOM-grade',total:7000},
       {comp:'Meter mounting + wiring',total:5000},
       {comp:'CT secondary wiring (sealed)',total:5000},
@@ -294,8 +294,8 @@ const MAIN_METER_SCENARIOS={
       {comp:'Labour 16hr @ ₹500/hr',total:8000},
       {comp:'Commissioning + DISCOM coordination',total:4000}]},
   ]},
-  LTCT:{label:'LT with CT (35-50 kW)',scenarios:[
-    {id:1,sheet:67500,name:'New cubicle with 1 BDM + CT chamber (EcoSoch scope)',dim:'800×1000×400 mm · new cubicle',bom:[
+  LTCT:{label:'LT with CT (35.001 - 50)',scenarios:[
+    {id:1,sheet:67500,name:'Yes - in EcoSoch scope (LT 35.001 - 50)',dim:'new cubicle + 1 BDM + CT chamber',bom:[
       {comp:'LT MS metal box (2mm CRCA, DISCOM-spec)',total:18000},
       {comp:'Al busbar 40×6 mm · 4 bars × 1m (80A)',total:5000},
       {comp:'LT CTs 50/5A or 100/5A × 4 (DISCOM-spec)',total:4000},
@@ -305,7 +305,15 @@ const MAIN_METER_SCENARIOS={
       {comp:'Glands, lugs, terminals',total:3000},
       {comp:'Labour 14hr @ ₹500/hr',total:7000},
       {comp:'Commissioning + DISCOM coordination',total:2500}]},
-    {id:2,sheet:28500,name:'Client scope / existing compatible',dim:'existing + minimal meter prep',bom:[
+    {id:2,sheet:28500,name:'No - in Client scope/Existing Meter Cubicle is available (LT 35.001 - 50)',dim:'existing + BDM only',bom:[
+      {comp:'TTB (LT, small)',total:4500},
+      {comp:'Meter wiring + cable routing',total:3500},
+      {comp:'CT secondary wiring (if existing)',total:3000},
+      {comp:'Sealing kits + tamper seals',total:3000},
+      {comp:'Lugs, ferrules, glands',total:2500},
+      {comp:'Labour 10hr @ ₹500/hr',total:5000},
+      {comp:'Commissioning',total:2000}]},
+    {id:3,sheet:28500,name:'35 > Sanctioned Load <= 50 and Sys_Size <= 35',dim:'existing + BDM only (boundary case)',bom:[
       {comp:'TTB (LT, small)',total:4500},
       {comp:'Meter wiring + cable routing',total:3500},
       {comp:'CT secondary wiring (if existing)',total:3000},
@@ -314,8 +322,8 @@ const MAIN_METER_SCENARIOS={
       {comp:'Labour 10hr @ ₹500/hr',total:5000},
       {comp:'Commissioning',total:2000}]},
   ]},
-  LTNOCT:{label:'LT without CT (5-35 kW)',scenarios:[
-    {id:1,sheet:11600,name:'New cubicle with 1 BDM (EcoSoch scope, 5-35 kW)',dim:'600×800×300 mm · new cubicle',bom:[
+  LTNOCT:{label:'LT w/o CT (5 - 35)',scenarios:[
+    {id:1,sheet:11600,name:'Yes - in EcoSoch scope (5 - 35)',dim:'new cubicle + 1 BDM',bom:[
       {comp:'LT MS metal box (1.6mm CRCA, DISCOM-spec)',total:3000},
       {comp:'Al busbar 25×5 mm · 4 bars × 0.8m (35A)',total:1500},
       {comp:'Cable termination + bushings',total:1200},
@@ -323,7 +331,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Sealing kits + tamper-proof seals',total:800},
       {comp:'Glands, lugs, terminals',total:600},
       {comp:'Labour 4hr @ ₹500/hr',total:2000}]},
-    {id:2,sheet:9000,name:'Client scope / existing compatible',dim:'existing + minimal meter prep',bom:[
+    {id:2,sheet:9000,name:'No - in Client scope/Existing Meter Cubicle is available (5 - 35)',dim:'existing + BDM only',bom:[
       {comp:'Meter wiring + cable routing',total:2000},
       {comp:'Sealing kits + tamper seals',total:1500},
       {comp:'Lugs, ferrules, glands',total:1200},
@@ -885,8 +893,27 @@ function getInverter(wb,proj){
 }
 
 function getInputs(wb){
-  const out={phase:null,sanctionedLoad:null,smartMeter:null,blocks:1,blockData:[],totalInverters:0,totalCurrent:0,totalACDBCost:null,projectSizeKwp:null};
-  for(const row of getRows(wb,'Final Worksheet')){const lbl=nl(row[1]);if(lbl.includes('phase at premises'))out.phase=sv(row[2]);if(lbl.includes('smart meter'))out.smartMeter=sv(row[2]);if(lbl==='sanctioned load')out.sanctionedLoad=parseFloat(row[2])||parseFloat(row[3])||null;if(lbl.includes('project size'))out.projectSizeKwp=parseFloat(row[2])||parseFloat(row[3])||null;if(lbl.includes('number of blocks')||lbl.includes('total blocks'))out.blocks=parseInt(row[2])||parseInt(row[3])||1}
+  const out={phase:null,sanctionedLoad:null,smartMeter:null,blocks:1,blockData:[],totalInverters:0,totalCurrent:0,totalACDBCost:null,projectSizeKwp:null,existingMeterSel:'',existingMeterType:''};
+  for(const row of getRows(wb,'Final Worksheet')){const lbl=nl(row[1]);if(lbl.includes('phase at premises'))out.phase=sv(row[2]);if(lbl.includes('smart meter'))out.smartMeter=sv(row[2]);if(lbl==='sanctioned load')out.sanctionedLoad=parseFloat(row[2])||parseFloat(row[3])||null;if(lbl.includes('project size'))out.projectSizeKwp=parseFloat(row[2])||parseFloat(row[3])||null;if(lbl.includes('number of blocks')||lbl.includes('total blocks'))out.blocks=parseInt(row[2])||parseInt(row[3])||1;
+    // Existing meter selection — the user's chosen cubicle scenario (drives the Main Meter market comparison)
+    if(lbl.includes('existing meter')&&(lbl.includes('selection')||lbl.includes('cubicle')||lbl.includes('option'))){const v=sv(row[2]);if(v&&!/^#?n\/?a$/i.test(v)&&nl(v)!=='ok'&&nl(v)!=='not ok')out.existingMeterSel=out.existingMeterSel||v;}
+    // "Existing Meter Type" row: col C = category, col D = the specific cubicle selection.
+    if(lbl==='existing meter type'){
+      const cVal=sv(row[2]), dVal=sv(row[3]);
+      if(cVal&&!out.existingMeterType)out.existingMeterType=cVal;     // category (first occurrence wins)
+      if(dVal&&!out.existingMeterSel)out.existingMeterSel=dVal;        // specific selection (e.g. "3CT3PT with space...no TTB")
+    }
+  }
+  // Also scan for any cell naming a specific cubicle option (e.g. "3CT3PT with space ... no TTB"),
+  // which may sit in a value cell rather than a labelled row.
+  if(!out.existingMeterSel){
+    for(const row of getRows(wb,'Final Worksheet')){
+      for(const cell of row){const s=nl(cell);
+        if((s.includes('3ct3pt')||s.includes('2ct2pt')||s.includes('solar ready'))&&(s.includes('space')||s.includes('ttb')||s.includes('ready')||s.includes('replace')||s.includes('modif'))){out.existingMeterSel=sv(cell);break;}
+      }
+      if(out.existingMeterSel)break;
+    }
+  }
   // Also try Cost Summary "Materials & Services for XXX kWp" header
   if(!out.projectSizeKwp){
     for(const row of getRows(wb,'Cost Summary')){
@@ -1545,27 +1572,22 @@ function renderMainMeter(inv,panel,supply,inputs){
   // ₹150,000 CT-type cubicle regardless of the real selection.
   const appCat=MAIN_METER_SCENARIOS[applicableCat];
   function pickScenario(cat,desc,sheetCostPerUnit){
-    // (1) cost match — within ±2% of a scenario's listed sheet price
-    if(sheetCostPerUnit&&sheetCostPerUnit>0){
-      let byCost=null,bestDiff=Infinity;
-      for(const s of cat.scenarios){
-        const diff=Math.abs(s.sheet-sheetCostPerUnit)/s.sheet;
-        if(diff<bestDiff){bestDiff=diff;byCost=s;}
-      }
-      if(byCost&&bestDiff<=0.02)return byCost;
-    }
-    // (2) description keyword match
+    // (1) selection text (from Final Worksheet "Existing meter selection") — authoritative
     const d=nl(desc||'');
     if(d){
       const score=name=>{
         const n=nl(name);let s=0;
-        if(d.includes('3ct3pt')&&n.includes('3ct3pt'))s+=4;
-        if(d.includes('no ttb')&&n.includes('no ttb'))s+=4;
-        if((d.includes('with space')||d.includes('space for'))&&n.includes('space'))s+=3;
-        if((d.includes('no space')||d.includes('no-space'))&&n.includes('no space'))s+=4;
-        if(d.includes('modification')&&n.includes('modification'))s+=4;
-        if(d.includes('solar ready')&&n.includes('solar ready'))s+=4;
-        if((d.includes('new ')||d.includes('new cubicle'))&&n.includes('new'))s+=3;
+        if(d.includes('3ct3pt')&&n.includes('3ct3pt'))s+=2;
+        if(d.includes('2ct2pt')&&n.includes('2ct2pt'))s+=4;
+        // "with space, no TTB" → the with-space scenario
+        if((d.includes('with space')||d.includes('space for'))&&!d.includes('no space')&&n.includes('space')&&!n.includes('modification'))s+=5;
+        if(d.includes('no ttb')&&n.includes('no ttb'))s+=3;
+        // "no space for both" → modification needed
+        if((d.includes('no space')||d.includes('no-space'))&&n.includes('modification'))s+=6;
+        if(d.includes('modification')&&n.includes('modification'))s+=5;
+        if((d.includes('partial amendment')||d.includes('welding'))&&n.includes('modification'))s+=5;
+        if(d.includes('solar ready')&&n.includes('solar ready'))s+=6;
+        if((d.includes('new ')||d.includes('new cubicle')||d.includes('full replace'))&&n.includes('new'))s+=5;
         if(d.includes('ct type')&&n.includes('ct type'))s+=2;
         const words=n.split(/[^a-z0-9]+/).filter(w=>w.length>3);
         words.forEach(w=>{if(d.includes(w))s+=1;});
@@ -1575,10 +1597,22 @@ function renderMainMeter(inv,panel,supply,inputs){
       for(const s of cat.scenarios){const sc=score(s.name);if(sc>bestScore){bestScore=sc;best=s;}}
       if(bestScore>0)return best;
     }
+    // (2) cost match — within ±2% of a scenario's listed sheet price
+    if(sheetCostPerUnit&&sheetCostPerUnit>0){
+      let byCost=null,bestDiff=Infinity;
+      for(const s of cat.scenarios){
+        const diff=Math.abs(s.sheet-sheetCostPerUnit)/s.sheet;
+        if(diff<bestDiff){bestDiff=diff;byCost=s;}
+      }
+      if(byCost&&bestDiff<=0.02)return byCost;
+    }
     return cat.scenarios[0];
   }
+  // Primary selection signal = the Final Worksheet "Existing meter selection" text; then the
+  // panel line description; then the sheet cost. The Final-Worksheet selection is authoritative.
+  const selDesc=(inputs&&inputs.existingMeterSel)?inputs.existingMeterSel:(panel.userDesc||'');
   const _scuPerUnit=(panel.sheetCost!=null&&panel.qty)?panel.sheetCost/panel.qty:(panel.sheetCost||null);
-  const selScen=pickScenario(appCat,panel.userDesc,_scuPerUnit);
+  const selScen=pickScenario(appCat,selDesc,_scuPerUnit);
   // Build scenario tables — one per category, with applicable badge
   let scenTables='';
   for(const catKey of ['HT','LT3CT','LTCT','LTNOCT']){
@@ -1631,6 +1665,7 @@ function renderMainMeter(inv,panel,supply,inputs){
       '<div><div class="pi-lbl">Sanctioned Load</div><div class="pi-val">'+(SL?SL+' kW':'Not in sheet — using '+round2(inv.kva)+' kVA as proxy')+'</div></div>'+
       '<div><div class="pi-lbl">Supply</div><div class="pi-val">'+supply+'</div></div>'+
       '<div><div class="pi-lbl">Applicable Category</div><div class="pi-val">'+appCat.label+'</div></div>'+
+      '<div><div class="pi-lbl">Selected cubicle (from Final Worksheet)</div><div class="pi-val" style="font-size:12px">'+(selScen.name)+'</div></div>'+
       '<div><div class="pi-lbl">Qty</div><div class="pi-val">'+(panel.qty||1)+' no.s</div></div>'+
     '</div>'+
     (!SL?'<div class="warn-box">Sanctioned load not found in Final Worksheet (row 3, column C). Applicable category determined using inverter capacity ('+round2(inv.kva)+' kVA) as a proxy. Fill in the sanctioned load for accurate validation.</div>':'')+

@@ -1559,60 +1559,62 @@ function renderSolarLT(inv,panel,supply,inputs){
   '</div>';
 }
 
+// Pick the meter-cubicle scenario the sheet actually selected, within a category.
+// Signals, most reliable first: (1) the selection text (Final Worksheet "Existing meter
+// selection" / cubicle description), matched by keywords; (2) the sheet's own cubicle cost
+// matched to a scenario's listed price. Used by BOTH the panel render and the overall total,
+// so they always agree.
+function pickMeterScenario(cat,desc,sheetCostPerUnit){
+  const d=nl(desc||'');
+  if(d){
+    const score=name=>{
+      const n=nl(name);let s=0;
+      if(d.includes('3ct3pt')&&n.includes('3ct3pt'))s+=2;
+      if(d.includes('2ct2pt')&&n.includes('2ct2pt'))s+=4;
+      // "no space for both" → the no-space scenario (must check BEFORE the with-space rule)
+      if((d.includes('no space')||d.includes('no-space'))&&(n.includes('no space')||n.includes('no-space')))s+=6;
+      // "with space" → the with-space scenario (exclude when desc says "no space")
+      if((d.includes('with space')||d.includes('space for'))&&!d.includes('no space')&&n.includes('space')&&!n.includes('no space'))s+=5;
+      if(d.includes('no ttb')&&n.includes('no ttb'))s+=2;
+      if(d.includes('modification')&&n.includes('modification'))s+=5;
+      if((d.includes('partial amendment')||d.includes('welding'))&&n.includes('modification'))s+=5;
+      if(d.includes('solar ready')&&n.includes('solar ready'))s+=6;
+      if((d.includes('old lt ct')||d.includes('old ct'))&&n.includes('old lt ct'))s+=6;
+      if((d.includes('new ')||d.includes('new cubicle')||d.includes('full replace'))&&(n.includes('new')||n.includes('old lt ct')))s+=4;
+      if(d.includes('no - in client')&&n.includes('no - in client'))s+=6;
+      if(d.includes('yes - in ecosoch')&&n.includes('yes - in ecosoch'))s+=6;
+      if(d.includes('civil work required')&&n.includes('civil work required'))s+=6;
+      if(d.includes('no civil')&&n.includes('no civil'))s+=6;
+      const words=n.split(/[^a-z0-9]+/).filter(w=>w.length>3);
+      words.forEach(w=>{if(d.includes(w))s+=1;});
+      return s;
+    };
+    let best=cat.scenarios[0],bestScore=-1;
+    for(const s of cat.scenarios){const sc=score(s.name);if(sc>bestScore){bestScore=sc;best=s;}}
+    if(bestScore>0)return best;
+  }
+  if(sheetCostPerUnit&&sheetCostPerUnit>0){
+    let byCost=null,bestDiff=Infinity;
+    for(const s of cat.scenarios){const diff=Math.abs(s.sheet-sheetCostPerUnit)/s.sheet;if(diff<bestDiff){bestDiff=diff;byCost=s;}}
+    if(byCost&&bestDiff<=0.02)return byCost;
+  }
+  return cat.scenarios[0];
+}
+// Resolve the selected scenario for a main-meter panel (shared by render + totals).
+function selectedMeterScenario(inv,panel,inputs){
+  const effSL=inputs.sanctionedLoad||inv.kva;
+  const cat=MAIN_METER_SCENARIOS[applicableCategory(effSL)];
+  const selDesc=(inputs&&inputs.existingMeterSel)?inputs.existingMeterSel:(panel.userDesc||'');
+  const scu=(panel.sheetCost!=null&&panel.qty)?panel.sheetCost/panel.qty:(panel.sheetCost||null);
+  return pickMeterScenario(cat,selDesc,scu);
+}
+
 function renderMainMeter(inv,panel,supply,inputs){
   const SL=inputs.sanctionedLoad;
   const effSL=SL||inv.kva;
   const applicableCat=applicableCategory(effSL);
-  // Selected scenario for the applicable category. We identify which cubicle option the
-  // sheet actually chose using TWO signals, most reliable first:
-  //  (1) the sheet's own meter-cubicle cost (panel.sheetCost / qty) matched to a scenario's
-  //      listed price — this is unambiguous (e.g. ₹65,000 → "3CT3PT with space, no TTB"); then
-  //  (2) the cubicle description text, matched by keywords.
-  // Previously it always took scenarios[0], so any LT3CT sheet was compared against the
-  // ₹150,000 CT-type cubicle regardless of the real selection.
   const appCat=MAIN_METER_SCENARIOS[applicableCat];
-  function pickScenario(cat,desc,sheetCostPerUnit){
-    // (1) selection text (from Final Worksheet "Existing meter selection") — authoritative
-    const d=nl(desc||'');
-    if(d){
-      const score=name=>{
-        const n=nl(name);let s=0;
-        if(d.includes('3ct3pt')&&n.includes('3ct3pt'))s+=2;
-        if(d.includes('2ct2pt')&&n.includes('2ct2pt'))s+=4;
-        // "with space, no TTB" → the with-space scenario
-        if((d.includes('with space')||d.includes('space for'))&&!d.includes('no space')&&n.includes('space')&&!n.includes('modification'))s+=5;
-        if(d.includes('no ttb')&&n.includes('no ttb'))s+=3;
-        // "no space for both" → modification needed
-        if((d.includes('no space')||d.includes('no-space'))&&n.includes('modification'))s+=6;
-        if(d.includes('modification')&&n.includes('modification'))s+=5;
-        if((d.includes('partial amendment')||d.includes('welding'))&&n.includes('modification'))s+=5;
-        if(d.includes('solar ready')&&n.includes('solar ready'))s+=6;
-        if((d.includes('new ')||d.includes('new cubicle')||d.includes('full replace'))&&n.includes('new'))s+=5;
-        if(d.includes('ct type')&&n.includes('ct type'))s+=2;
-        const words=n.split(/[^a-z0-9]+/).filter(w=>w.length>3);
-        words.forEach(w=>{if(d.includes(w))s+=1;});
-        return s;
-      };
-      let best=cat.scenarios[0],bestScore=-1;
-      for(const s of cat.scenarios){const sc=score(s.name);if(sc>bestScore){bestScore=sc;best=s;}}
-      if(bestScore>0)return best;
-    }
-    // (2) cost match — within ±2% of a scenario's listed sheet price
-    if(sheetCostPerUnit&&sheetCostPerUnit>0){
-      let byCost=null,bestDiff=Infinity;
-      for(const s of cat.scenarios){
-        const diff=Math.abs(s.sheet-sheetCostPerUnit)/s.sheet;
-        if(diff<bestDiff){bestDiff=diff;byCost=s;}
-      }
-      if(byCost&&bestDiff<=0.02)return byCost;
-    }
-    return cat.scenarios[0];
-  }
-  // Primary selection signal = the Final Worksheet "Existing meter selection" text; then the
-  // panel line description; then the sheet cost. The Final-Worksheet selection is authoritative.
-  const selDesc=(inputs&&inputs.existingMeterSel)?inputs.existingMeterSel:(panel.userDesc||'');
-  const _scuPerUnit=(panel.sheetCost!=null&&panel.qty)?panel.sheetCost/panel.qty:(panel.sheetCost||null);
-  const selScen=pickScenario(appCat,selDesc,_scuPerUnit);
+  const selScen=selectedMeterScenario(inv,panel,inputs);
   // Build scenario tables — one per category, with applicable badge
   let scenTables='';
   for(const catKey of ['HT','LT3CT','LTCT','LTNOCT']){
@@ -1832,9 +1834,7 @@ function processWorkbook(file){
         html+=renderSolarLT(inv,panels.solarLT,supply,inputs);
       }
       if(panels.mainMeter.present){
-        const effSL=inputs.sanctionedLoad||inv.kva;
-        const appCat=MAIN_METER_SCENARIOS[applicableCategory(effSL)];
-        const selScen=appCat.scenarios[0];
+        const selScen=selectedMeterScenario(inv,panels.mainMeter,inputs);
         const selMkt=scenarioMarket(selScen);
         const sc=panels.mainMeter.sheetCost!=null?panels.mainMeter.sheetCost:selScen.sheet*(panels.mainMeter.qty||1);
         results.mainMeter={sheetCost:sc,marketFair:selMkt.fair*(panels.mainMeter.qty||1)};

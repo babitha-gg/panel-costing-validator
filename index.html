@@ -1022,7 +1022,7 @@ function getInputs(wb){
 }
 
 function scanPanels(wb){
-  const r={acdb:{present:false,sheetCost:null,qty:0,source:''},combiner:{present:false,sheetCost:null,qty:0,source:'',userDesc:''},solarLT:{present:false,sheetCost:null,qty:0,source:'',smartMeter:false},mainMeter:{present:false,sheetCost:null,qty:0,source:''}};
+  const r={acdb:{present:false,sheetCost:null,qty:0,source:''},combiner:{present:false,sheetCost:null,qty:0,source:'',userDesc:''},solarLT:{present:false,sheetCost:null,qty:0,source:'',smartMeter:false},mainMeter:{present:false,sheetCost:null,qty:0,source:'',userDesc:''}};
   // CLASSIFY a description into one of the four panel keys
   // AC Combiner detection: explicit "combiner" word, or "AJB" (AC Junction Box), or "ACCB", or "AC combiner box"
   function classify(d){
@@ -1073,6 +1073,7 @@ function scanPanels(wb){
       r[key].sheetCost=total;  // this is the TOTAL for all units (not per-unit)
       r[key].source='Final Worksheet R'+(ri+1)+(isExtrasRow?' (Extras)':'');
       if(key==='combiner')r.combiner.userDesc=desc;
+      if(key==='mainMeter')r.mainMeter.userDesc=desc;
       if(key==='solarLT'&&nl(desc).includes('smart'))r.solarLT.smartMeter=true;
     }
   }
@@ -1095,6 +1096,7 @@ function scanPanels(wb){
       r[key].sheetCost=hasPrice?totalCost:null;
       r[key].source='Cost Summary R'+(ri+1);
       if(key==='combiner')r.combiner.userDesc=desc;
+      if(key==='mainMeter')r.mainMeter.userDesc=desc;
       if(key==='solarLT'&&nl(desc).includes('smart'))r.solarLT.smartMeter=true;
     }else if(r[key].present&&!r[key].sheetCost&&hasPrice){
       r[key].sheetCost=totalCost;
@@ -1534,6 +1536,49 @@ function renderMainMeter(inv,panel,supply,inputs){
   const SL=inputs.sanctionedLoad;
   const effSL=SL||inv.kva;
   const applicableCat=applicableCategory(effSL);
+  // Selected scenario for the applicable category. We identify which cubicle option the
+  // sheet actually chose using TWO signals, most reliable first:
+  //  (1) the sheet's own meter-cubicle cost (panel.sheetCost / qty) matched to a scenario's
+  //      listed price — this is unambiguous (e.g. ₹65,000 → "3CT3PT with space, no TTB"); then
+  //  (2) the cubicle description text, matched by keywords.
+  // Previously it always took scenarios[0], so any LT3CT sheet was compared against the
+  // ₹150,000 CT-type cubicle regardless of the real selection.
+  const appCat=MAIN_METER_SCENARIOS[applicableCat];
+  function pickScenario(cat,desc,sheetCostPerUnit){
+    // (1) cost match — within ±2% of a scenario's listed sheet price
+    if(sheetCostPerUnit&&sheetCostPerUnit>0){
+      let byCost=null,bestDiff=Infinity;
+      for(const s of cat.scenarios){
+        const diff=Math.abs(s.sheet-sheetCostPerUnit)/s.sheet;
+        if(diff<bestDiff){bestDiff=diff;byCost=s;}
+      }
+      if(byCost&&bestDiff<=0.02)return byCost;
+    }
+    // (2) description keyword match
+    const d=nl(desc||'');
+    if(d){
+      const score=name=>{
+        const n=nl(name);let s=0;
+        if(d.includes('3ct3pt')&&n.includes('3ct3pt'))s+=4;
+        if(d.includes('no ttb')&&n.includes('no ttb'))s+=4;
+        if((d.includes('with space')||d.includes('space for'))&&n.includes('space'))s+=3;
+        if((d.includes('no space')||d.includes('no-space'))&&n.includes('no space'))s+=4;
+        if(d.includes('modification')&&n.includes('modification'))s+=4;
+        if(d.includes('solar ready')&&n.includes('solar ready'))s+=4;
+        if((d.includes('new ')||d.includes('new cubicle'))&&n.includes('new'))s+=3;
+        if(d.includes('ct type')&&n.includes('ct type'))s+=2;
+        const words=n.split(/[^a-z0-9]+/).filter(w=>w.length>3);
+        words.forEach(w=>{if(d.includes(w))s+=1;});
+        return s;
+      };
+      let best=cat.scenarios[0],bestScore=-1;
+      for(const s of cat.scenarios){const sc=score(s.name);if(sc>bestScore){bestScore=sc;best=s;}}
+      if(bestScore>0)return best;
+    }
+    return cat.scenarios[0];
+  }
+  const _scuPerUnit=(panel.sheetCost!=null&&panel.qty)?panel.sheetCost/panel.qty:(panel.sheetCost||null);
+  const selScen=pickScenario(appCat,panel.userDesc,_scuPerUnit);
   // Build scenario tables — one per category, with applicable badge
   let scenTables='';
   for(const catKey of ['HT','LT3CT','LTCT','LTNOCT']){
@@ -1551,9 +1596,10 @@ function renderMainMeter(inv,panel,supply,inputs){
       const v=pct(s.sheet,mkt.fair);
       const cls=varCls(v);
       const color=cls==='ok'?'var(--g)':cls==='warn'?'var(--a)':cls==='err'?'var(--r)':'var(--t3)';
-      scenTables+='<tr>'+
+      const isSel=isApp&&s.id===selScen.id;
+      scenTables+='<tr'+(isSel?' style="background:#dcfff4"':'')+'>'+
         '<td class="mono">'+s.id+'</td>'+
-        '<td class="nm">'+s.name+'</td>'+
+        '<td class="nm">'+s.name+(isSel?' <span style="background:var(--g);color:#fff;padding:1px 7px;border-radius:9px;font-size:9px;font-weight:700">SELECTED</span>':'')+'</td>'+
         '<td class="sp">'+s.dim+'</td>'+
         '<td class="mono">'+inr(s.sheet)+'</td>'+
         '<td class="mono">'+inr(mkt.fair)+'</td>'+
@@ -1562,9 +1608,6 @@ function renderMainMeter(inv,panel,supply,inputs){
     }
     scenTables+='</tbody></table></div></div>';
   }
-  // Selected scenario for the applicable category (default to scenario #1)
-  const appCat=MAIN_METER_SCENARIOS[applicableCat];
-  const selScen=appCat.scenarios[0];
   const selMkt=scenarioMarket(selScen);
   let sheetCost=panel.sheetCost;
   let sheetSrc;

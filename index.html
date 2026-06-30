@@ -258,7 +258,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Commissioning + DISCOM testing',total:5000}]},
   ]},
   LT3CT:{label:'LT with 3CT3PT (50.001 - 150)',scenarios:[
-    {id:1,sheet:170000,name:'New LT 50-150 Meter cubicle (Old LT CT Meter Cubicle)',dim:'new cubicle + 2 BDM + modem',bom:[
+    {id:1,sheet:170000,name:'Old LT CT Meter Cubicle',dim:'new cubicle + 2 BDM + modem',bom:[
       {comp:'LT MS metal box (2mm CRCA, DISCOM-spec)',total:30000},
       {comp:'Al busbar 50×10 mm · 4 bars × 1.2m (200-300A)',total:10000},
       {comp:'LT CTs 200/5A Cl 0.5/0.5S × 4 (DISCOM-spec)',total:20000},
@@ -267,7 +267,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Glands, lugs, terminals (DISCOM-spec)',total:6000},
       {comp:'Sealing kits + tamper-proof seals',total:5000},
       {comp:'Labour 24hr @ ₹500/hr',total:12000}]},
-    {id:2,sheet:65000,name:'3CT3PT with space for Check Meter but no TTB',dim:'existing cubicle + TTB add',bom:[
+    {id:2,sheet:65000,name:'3CT3PT with space for Check Meter but no TTB (LT 50.001 - 150)',dim:'existing cubicle + TTB add',bom:[
       {comp:'TTB (Test Terminal Block) DISCOM-grade',total:8000},
       {comp:'Cubicle modification (drilling, panel beating)',total:8000},
       {comp:'Meter mounting plate (DISCOM-spec)',total:5000},
@@ -276,7 +276,7 @@ const MAIN_METER_SCENARIOS={
       {comp:'Glands, lugs, ferrules',total:4000},
       {comp:'Labour 18hr @ ₹500/hr',total:9000},
       {comp:'Commissioning + DISCOM coordination',total:3000}]},
-    {id:3,sheet:90000,name:'3CT3PT with no space for both Check Meter and TTB',dim:'major modification',bom:[
+    {id:3,sheet:90000,name:'3CT3PT with no space for both Check Meter and TTB  (LT 50.001 - 150)',dim:'major modification',bom:[
       {comp:'TTB (Test Terminal Block) DISCOM-grade',total:8000},
       {comp:'Cubicle major modification (welding, painting, partition)',total:22000},
       {comp:'Meter mounting plate + 2 BDM provision',total:6000},
@@ -1624,7 +1624,7 @@ function renderMainMeter(inv,panel,supply,inputs){
         (isApp?' <span style="background:#dcfff4;color:var(--gd);padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700">✓ Applicable</span>':'')+
       '</div>'+
       '<div class="tbl-wrap"><table>'+
-        '<thead><tr><th style="width:36px">#</th><th style="min-width:220px">Scenario</th><th>Scope / Box</th><th>Sheet ₹</th><th>Market ₹</th><th>Variance</th></tr></thead><tbody>';
+        '<thead><tr><th style="width:36px">#</th><th style="min-width:220px">Existing Scenario</th><th>Scope / Box</th><th>Sheet ₹</th><th>Market ₹</th><th>Variance</th></tr></thead><tbody>';
     for(const s of cat.scenarios){
       const mkt=scenarioMarket(s);
       const v=pct(s.sheet,mkt.fair);

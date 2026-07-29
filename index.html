@@ -533,7 +533,23 @@ async function loadSheet(){
           }
         }
         if(costC<0)costC=3; if(itemC<0)itemC=1; if(srcC<0)srcC=4;
-        // collect all SPD data rows (have a numeric cost and an item that mentions SPD)
+        // collect all SPD data rows (have a numeric cost and an item that mentions SPD).
+        // We consider ONLY Type 2 SPDs for the panel BOM (Type 2 / Class II / T2 — the standard
+        // SPD used inside AC panels). Rows that are clearly Type 1-only (Type 1 / Class I / T1,
+        // not combined 1+2) are excluded.
+        const isType2=txt=>{
+          const t=txt.toLowerCase();
+          // combined Type 1+2 counts as Type 2-capable → allowed
+          if(/type\s*1\s*\+\s*2|type\s*1&2|type\s*1\/2|class\s*i\+ii|t1\+t2|t1\/t2/.test(t))return true;
+          // explicit Type 2 markers
+          if(/type\s*2|type\s*ii\b|class\s*ii\b|\bt2\b/.test(t))return true;
+          // explicit Type 1-only markers → NOT type 2
+          if(/type\s*1\b|type\s*i\b|class\s*i\b|\bt1\b/.test(t))return false;
+          // Citel DS240/DS440 "…-280" series are Type 2 by product class → treat unlabelled DS…-280 as Type 2
+          if(/ds\d{3}.*-?\s*280/.test(t))return true;
+          // otherwise unknown → treat as Type 2 (AC panel SPDs are Type 2 by default)
+          return true;
+        };
         const rows3=[],rows1=[],any=[];
         for(const row of spgrid){
           const item=String(row[itemC]||'').trim();
@@ -542,13 +558,14 @@ async function loadSheet(){
           const sec=nl(row[0]);
           if(!item||isNaN(cost)||cost<=0)continue;
           if(!/spd|surge/.test(item.toLowerCase()))continue;
+          if(!isType2(item))continue;                       // Type 2 only
           const rec={name:item,price:cost,src:rsrc};
           any.push(rec);
           const is3=/3\s*-?\s*ph|three/.test(item.toLowerCase())||sec.includes('3-phase')||sec.includes('3 phase');
           const is1=/1\s*-?\s*ph|single/.test(item.toLowerCase())||sec.includes('1-phase')||sec.includes('1 phase');
           if(is3)rows3.push(rec); else if(is1)rows1.push(rec);
         }
-        SHEET.spd=rows3[0]||any[0]||null;       // 3-phase preferred for these panels
+        SHEET.spd=rows3[0]||any[0]||null;       // 3-phase Type 2 preferred for these panels
         SHEET.spd1=rows1[0]||null;
         SHEET.spdList=any;
       }catch(e){SHEET.spd=null;SHEET.spdErr=e.message;}

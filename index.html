@@ -1222,7 +1222,7 @@ function buildACDB_BOM_byAmps(I_acdb,numInputs){
   const bus=busbarCost(I_acdb);
   const labHr=numInputs<=1?7:(7+numInputs*2);  // more inputs = more wiring/test time
   const lines=[
-    {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · '+tableIns+' in 1 out',qty:1,unit:box.total,total:box.total,src:box.src},
+    {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · '+numInputs+' in 1 out',qty:1,unit:box.total,total:box.total,src:box.src},
     {comp:'Incomer '+inBrk.type+' (per input)',spec:inBrk.size+' · '+inBrk.brand,qty:numInputs,unit:inBrk.cost,total:inBrk.cost*numInputs,src:inBrk.src}
   ];
   // (No outgoing MCCB/MCB here — the Solar LT panel already carries the outgoing breaker;
@@ -1236,7 +1236,7 @@ function buildACDB_BOM_byAmps(I_acdb,numInputs){
   );
   const cost=lines.reduce((s,l)=>s+l.total,0);
   const margin=Math.round(cost*0.20);
-  return{boxStr,ratedAmps,ins:tableIns,numInputs,lines,cost,margin,fair:cost+margin};
+  return{boxStr,ratedAmps,ins:numInputs,tableIns,numInputs,lines,cost,margin,fair:cost+margin};
 }
 
 // Smart Solar Generation Meter price by system kW (from sheet "Smart - Solar Generation Meter" tab)
@@ -1269,7 +1269,7 @@ function buildSolarLT_BOM(kw,supply,I_solar,smart){
     (function(){const s=shuntCost(I_solar);return{comp:'Shunt trip coil (for outgoing MCCB)',spec:'MX shunt release · 230V AC',qty:1,unit:s.cost,total:s.cost,src:s.src}})(),
     (function(){const r=relayCost();return{comp:'Protection relay',spec:'Selec 900VPR-2-280/520V · 3Ø voltage protection',qty:1,unit:r.cost,total:r.cost,src:r.src}})(),
     {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
-    {comp:'Outgoing '+brk.type+' (with shunt)',spec:brk.size+' · '+brk.brand+' · shunt-trip equipped',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
+    {comp:'Outgoing '+brk.type+' (with shunt)',spec:brk.size+' frame · sized for '+I_solar+'A inverter total current · '+brk.brand+' · shunt-trip equipped',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
     {comp:'Glands + control wiring',spec:'Meter + relay + shunt control wiring',qty:1,unit:1500,total:1500,src:'IndiaMART · local'},
     {comp:'Labour (fab + wiring + test)',spec:labHr+' hr @ ₹500/hr',qty:labHr,unit:500,total:labHr*500,src:'Local fabricator (₹500/hr)'}
   ];
@@ -1551,10 +1551,12 @@ function renderCombinerMissing(inv,inputs,supply){
 
 function renderSolarLT(inv,panel,supply,inputs){
   const kw=inv.kva;
-  // I_solar: prefer the "Total Current for all..." (C18 of Multiple Blocks tab = 438A).
-  // Fall back to deriving from system kVA only if the total current isn't available.
-  const I_solar=(inputs.totalCurrent&&inputs.totalCurrent>0)?Math.ceil(inputs.totalCurrent):Math.ceil(acCurrent(kw,supply));
-  const I_src=(inputs.totalCurrent&&inputs.totalCurrent>0)?'Multiple Blocks tab C18':'derived from kVA';
+  // I_solar = the inverter TOTAL current (sum of all blocks' Total Current). Prefer the
+  // sheet's "Total Current" (C18 / Inverter Selection sum); if absent, sum the per-block
+  // currents; only derive from kVA as a last resort.
+  const blockSum=(inputs.blockData||[]).reduce((s,b)=>s+(b.maxAC||0),0);
+  const I_solar=(inputs.totalCurrent&&inputs.totalCurrent>0)?Math.ceil(inputs.totalCurrent):(blockSum>0?Math.ceil(blockSum):Math.ceil(acCurrent(kw,supply)));
+  const I_src=(inputs.totalCurrent&&inputs.totalCurrent>0)?'inverter total current (Inverter Selection)':(blockSum>0?'sum of block currents':'derived from kVA');
   const smart=panel.smartMeter||inputs.smartMeter==='Yes';
   const bom=buildSolarLT_BOM(kw,supply,I_solar,smart);
   const ref=lookupSolarLT(kw,smart);
@@ -1569,7 +1571,7 @@ function renderSolarLT(inv,panel,supply,inputs){
       '<div><div class="pi-lbl">Box H×W×D (mm)</div><div class="pi-val">'+bom.boxStr+'</div></div>'+
       '<div><div class="pi-lbl">kW Range</div><div class="pi-val">'+(ref?ref.range:'—')+'</div></div>'+
       '<div><div class="pi-lbl">Meter Type</div><div class="pi-val">'+(smart?'Smart':'Normal')+'</div></div>'+
-      '<div><div class="pi-lbl">I_solar · Qty</div><div class="pi-val">'+I_solar+'A · '+(panel.qty||1)+' no.s</div></div>'+
+      '<div><div class="pi-lbl">Inverter total current · Qty</div><div class="pi-val">'+I_solar+'A · '+(panel.qty||1)+' no.s</div></div>'+
     '</div>'+
     comparisonRow(sheetCost,mktTotal,sheetSrc)+
     bomTable(bom)+
@@ -1844,7 +1846,8 @@ function processWorkbook(file){
       // NOTE: AC Combiner is only shown when actually present in the quote (no "missing" card).
       if(panels.solarLT.present){
         const kw=inv.kva;
-        const I_solar=(inputs.totalCurrent&&inputs.totalCurrent>0)?Math.ceil(inputs.totalCurrent):Math.ceil(acCurrent(kw,supply));
+        const blockSum=(inputs.blockData||[]).reduce((s,b)=>s+(b.maxAC||0),0);
+        const I_solar=(inputs.totalCurrent&&inputs.totalCurrent>0)?Math.ceil(inputs.totalCurrent):(blockSum>0?Math.ceil(blockSum):Math.ceil(acCurrent(kw,supply)));
         const smart=panels.solarLT.smartMeter||inputs.smartMeter==='Yes';
         const bom=buildSolarLT_BOM(kw,supply,I_solar,smart);const ref=lookupSolarLT(kw,smart);
         const sc=panels.solarLT.sheetCost!=null?panels.solarLT.sheetCost:(ref?ref.selected*(panels.solarLT.qty||1):null);

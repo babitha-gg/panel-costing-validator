@@ -465,13 +465,15 @@ function breakerFromSheet(family,reqAmps){
   const list=SHEET.breakers[family];
   // candidates rated >= required amps
   let cands=list.filter(b=>b.amps>=reqAmps);
-  if(!cands.length)cands=[list[list.length-1]];
+  // If NO sheet breaker is large enough, do NOT force an undersized one — return null so the
+  // caller falls back to a correctly-sized reference (e.g. a 1207A load must never get a 200A
+  // frame just because that's the biggest in the sheet).
+  if(!cands.length)return null;
   // monotonic sanity: a breaker's cost should be >= the largest cost of any smaller-rated one
   // (skip obviously-broken scrapes like 400A cheaper than 100A)
   const pick=cands[0];
   const maxBelow=Math.max(0,...list.filter(b=>b.amps<pick.amps).map(b=>b.cost));
   if(pick.cost<maxBelow*0.6){
-    // price looks wrong (too low vs smaller breakers) — try next candidate that passes
     const good=cands.find(b=>b.cost>=maxBelow*0.6);
     if(good)return good;
     return null; // none sane → caller falls back

@@ -690,14 +690,17 @@ function brkSrc(sheetSrc){
   return 'IndiaMart';
 }
 function breakerCost(amps){
+  // Size to 1.25 × load, rounded up to the next standard market rating (nextStd applies the
+  // 1.25 factor internally). Use that sized rating for BOTH the displayed frame and the
+  // project-base/IndiaMART lookup, so they never disagree.
   const std=nextStd(amps);
-  const reqA=Math.ceil(amps);  // actual current; let the sheet's own ratings pick the next size
+  const reqA=std;  // the 1.25-sized standard rating (e.g. 145A load → 200A)
   if(std<100){
     // MCB — from the breaker tab (4-pole), else IndiaMART reference
     const sp=breakerFromSheet('MCB',reqA);
     const p={16:550,20:600,25:700,32:900,40:1200,50:1400,63:1600,80:2200};
     if(sp)return{type:'MCB 4P',size:sp.amps+'A',brand:sp.item,src:brkSrc(sp.src),cost:sp.cost};
-    return{type:'MCB 4P 10kA',size:std+'A',brand:'ABB SH204M / Chint NXB-63',src:'IndiaMart',cost:(p[std]||1600)};
+    return{type:'MCB 4P',size:std+'A',brand:'ABB SH204M / Chint NXB-63',src:'IndiaMart',cost:(p[std]||1600)};
   }
   // For ≥800A use ACB; otherwise MCCB
   if(std>=800){
@@ -707,7 +710,7 @@ function breakerCost(amps){
   const sp=breakerFromSheet('MCCB',reqA);
   const p={100:6400,125:7800,160:11000,200:14000,250:16500,400:23000,630:36000,800:50000,1000:65000,1250:88000,1600:128000,2000:158000};
   if(sp)return{type:'MCCB 4P',size:sp.amps+'A',brand:sp.item,src:brkSrc(sp.src),cost:sp.cost};
-  return{type:'MCCB 4P 25-30kA',size:std+'A',brand:'L&T DU100H / Schneider EZC',src:'IndiaMart',cost:(p[std]||16500)};
+  return{type:'MCCB 4P',size:std+'A',brand:'L&T DU100H / Schneider EZC',src:'IndiaMart',cost:(p[std]||16500)};
 }
 function spdCost(a){
   // 1) AC SPD tab (dedicated) → 2) Table tab keyword → 3) IndiaMART reference.
@@ -1216,19 +1219,19 @@ function buildACDB_BOM_byAmps(I_acdb,numInputs){
   const ratedAmps=ref[5];
   const tableIns=ref[2];
   const box=msBoxCost(boxStr);
-  // Incoming breakers: one per inverter input. Each incomer is sized for the per-input
-  // current (≈ total / numInputs), with an outgoing breaker sized for the combined current.
+  // Incoming breakers: one per inverter input, each sized for the per-input current.
+  // Outgoing breaker: one, sized for the combined (total) current out of the ACDB.
   const perInputAmps=I_acdb/numInputs;
   const inBrk=breakerCost(perInputAmps);
+  const outBrk=breakerCost(I_acdb);
   const spd=spdCost(I_acdb);
   const bus=busbarCost(I_acdb);
   const labHr=numInputs<=1?7:(7+numInputs*2);  // more inputs = more wiring/test time
   const lines=[
     {comp:'MS sheet metal box',spec:boxStr+' mm (H x W x D) · '+box.kg.toFixed(1)+' kg · CRCA · '+numInputs+' in 1 out',qty:1,unit:box.total,total:box.total,src:box.src},
-    {comp:'Incomer '+inBrk.type+' (per input)',spec:inBrk.size+' · '+inBrk.brand,qty:numInputs,unit:inBrk.cost,total:inBrk.cost*numInputs,src:inBrk.src}
+    {comp:'Incoming '+inBrk.type+' (per input)',spec:inBrk.size+' · sized for '+Math.ceil(perInputAmps)+'A per input · '+inBrk.brand,qty:numInputs,unit:inBrk.cost,total:inBrk.cost*numInputs,src:inBrk.src},
+    {comp:'Outgoing '+outBrk.type,spec:outBrk.size+' · '+Math.ceil(I_acdb)+'A × 1.25 = '+Math.ceil(I_acdb*1.25)+'A → '+outBrk.size+' · '+outBrk.brand,qty:1,unit:outBrk.cost,total:outBrk.cost,src:outBrk.src}
   ];
-  // (No outgoing MCCB/MCB here — the Solar LT panel already carries the outgoing breaker;
-  //  adding one in each ACDB double-counts and inflates cost.)
   lines.push(
     {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
     {comp:'Aluminium busbar (R/Y/B/N)',spec:bus.size+' mm · 4 bars × 1m · '+bus.kg.toFixed(2)+' kg',qty:4,unit:Math.round(bus.total/4),total:bus.total,src:bus.src},
@@ -1271,7 +1274,7 @@ function buildSolarLT_BOM(kw,supply,I_solar,smart){
     (function(){const s=shuntCost(I_solar);return{comp:'Shunt trip coil (for outgoing MCCB)',spec:'MX shunt release · 230V AC',qty:1,unit:s.cost,total:s.cost,src:s.src}})(),
     (function(){const r=relayCost();return{comp:'Protection relay',spec:'Selec 900VPR-2-280/520V · 3Ø voltage protection',qty:1,unit:r.cost,total:r.cost,src:r.src}})(),
     {comp:'AC SPD Type 2',spec:spd.model,qty:1,unit:spd.cost,total:spd.cost,src:spd.src},
-    {comp:'Outgoing '+brk.type+' (with shunt)',spec:brk.size+' frame · sized for '+I_solar+'A inverter total current · '+brk.brand+' · shunt-trip equipped',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
+    {comp:'Outgoing '+brk.type+' (with shunt)',spec:brk.size+' · '+I_solar+'A × 1.25 = '+Math.ceil(I_solar*1.25)+'A → '+brk.size+' · '+brk.brand+' · shunt-trip equipped',qty:1,unit:brk.cost,total:brk.cost,src:brk.src},
     {comp:'Glands + control wiring',spec:'Meter + relay + shunt control wiring',qty:1,unit:1500,total:1500,src:'IndiaMART · local'},
     {comp:'Labour (fab + wiring + test)',spec:labHr+' hr @ ₹500/hr',qty:labHr,unit:500,total:labHr*500,src:'Local fabricator (₹500/hr)'}
   ];
